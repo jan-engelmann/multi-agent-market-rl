@@ -12,12 +12,12 @@ Data [Barbara]
 
 - Download [link](https://www.dropbox.com/s/3j4f9cbzh3imfr7/data.csv?dl=0)
 - Data description [link](https://mfr.osf.io/render?url=https://osf.io/8a97e/?direct%26mode=render%26action=download%26mode=render)
-- https://github.com/ikicab/Trading-in-a-Black-Box
+- Code https://github.com/ikicab/Trading-in-a-Black-Box
 
 
 ## Strong previous RL projects
-https://github.com/Alehud/RL_for_markets
-https://github.com/ekarais/RLFM
+- https://github.com/Alehud/RL_for_markets
+- https://github.com/ekarais/RLFM
 
 ## Thomas code sketch
 
