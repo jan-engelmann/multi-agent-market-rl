@@ -48,4 +48,4 @@ This means that each agent will be learning and generating many RL experiences i
 Unless you plan to use many machines, this will be efficient only if your environment is vectorised in GPU, i.e. the environment step computations happens in GPU and calculate batches of observations/rewards for batches of action inputs in parallel.
 Also some RL models are more easy to parallelize, i.e. Asynchronous Actor Critic A3C.
 
-See `misc/cluster_usage.pdf`
+See [cluster_usage.pdf](https://github.com/jan-engelmann/multi-agent-market-rl/blob/main/misc/cluster_usage.pdf)
