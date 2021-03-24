@@ -11,5 +11,5 @@
 	path = submodules/project_2
 	url = https://github.com/ekarais/RLFM
 [submodule "rlenv_project_2"]
-	path = rlenv_project_2
+	path = submodules/rlenv_project_2
 	url = https://github.com/zhy0/dmarket_rl
