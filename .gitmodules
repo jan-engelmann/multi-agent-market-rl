@@ -13,3 +13,6 @@
 [submodule "rlenv_project_2"]
 	path = submodules/rlenv_project_2
 	url = https://github.com/zhy0/dmarket_rl
+[submodule "submodules/spinningup-rl-tutorial"]
+	path = submodules/spinningup-rl-tutorial
+	url = https://github.com/openai/spinningup.git

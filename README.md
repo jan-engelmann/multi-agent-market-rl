@@ -41,6 +41,16 @@ class AgentEnv():
 
 ```
 
+## Learning resources
+- [Open AI RL Introduction, Spinning Up (Setting up Mujoco on Mac takes time, see learnings](https://spinningup.openai.com/en/latest/index.html)
+- [recommended RL resources](https://stable-baselines.readthedocs.io/en/master/guide/rl.html)
+
+
+## Libraries
+- [Open AI Gym, Foundation of Original environment](https://gym.openai.com/docs/)
+- [stable baselines library (most promising)](https://github.com/hill-a/stable-baselines)
+- [rl-libraries reviewed](https://medium.com/data-from-the-trenches/choosing-a-deep-reinforcement-learning-library-890fb0307092)
+
 ## Thomas compute advice
 I suggest you run it in Euler (if it is only CPU) or Leonhard cluster if it is either CPU or GPU.
 For GPU to see any serious speedup you would need a good mini batch procedure for learning.
