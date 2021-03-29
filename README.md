@@ -1,6 +1,12 @@
 # multi-agent-market-rl
 Creating a multi agent reinforcement learning environment for two sided auction markets.
 
+## Pull submodules
+The first time you clone the repo you need to download all submodules using:
+```
+git submodule update --init --recursive
+```
+
 ## Current Environment
 Market Env from course: https://github.com/asikist-ethz/market_rl 
 
