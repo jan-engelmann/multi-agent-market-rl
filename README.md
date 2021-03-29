@@ -44,6 +44,7 @@ class AgentEnv():
 ## Learning resources
 - [Open AI RL Introduction, Spinning Up (Setting up Mujoco on Mac takes time, see learnings](https://spinningup.openai.com/en/latest/index.html)
 - [recommended RL resources](https://stable-baselines.readthedocs.io/en/master/guide/rl.html)
+- [Multi Agent RL](https://bair.berkeley.edu/blog/2018/12/12/rllib/)
 
 
 ## Libraries
