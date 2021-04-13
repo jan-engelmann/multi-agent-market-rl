@@ -6,6 +6,8 @@ The first time you clone the repo you need to download all submodules using:
 ```
 git submodule update --init --recursive
 ```
+## Todo
+- checkout ray and discuss with Thomas, [Youtube Tutorial](https://www.youtube.com/watch?v=2dgIEwkGYGI)
 
 ## Current Environment
 Market Env from course: https://github.com/asikist-ethz/market_rl 
@@ -48,6 +50,7 @@ class AgentEnv():
 ```
 
 ## Learning resources
+- [Youtube Video Intro RLlib](https://www.youtube.com/watch?v=y2KjC7W9nsI), [Video Resources](https://github.com/anyscale/academy)
 - [Open AI RL Introduction, Spinning Up (Setting up Mujoco on Mac takes time, see learnings](https://spinningup.openai.com/en/latest/index.html)
 - [recommended RL resources](https://stable-baselines.readthedocs.io/en/master/guide/rl.html)
 - [Multi Agent RL](https://bair.berkeley.edu/blog/2018/12/12/rllib/)
@@ -57,6 +60,7 @@ class AgentEnv():
 - [Open AI Gym, Foundation of Original environment](https://gym.openai.com/docs/)
 - [stable baselines library (most promising)](https://github.com/hill-a/stable-baselines)
 - [rl-libraries reviewed](https://medium.com/data-from-the-trenches/choosing-a-deep-reinforcement-learning-library-890fb0307092)
+- [Pytorch distributed example](https://github.com/pytorch/examples/tree/507493d7b5fab51d55af88c5df9eadceb144fb67/distributed/rpc/rl)
 
 ## Thomas compute advice
 I suggest you run it in Euler (if it is only CPU) or Leonhard cluster if it is either CPU or GPU.
