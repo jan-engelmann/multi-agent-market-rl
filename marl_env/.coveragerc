@@ -1,6 +1,0 @@
-[run]
-omit =
-    versioneer.py
-    */_version.py
-    dmarket/tests/*
-    setup.py
