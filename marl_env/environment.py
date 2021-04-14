@@ -11,7 +11,7 @@ class Agent:
         self.number = number
 
     def get_action(self, observation: torch.tensor):
-        time.sleep(0.05)
+        # time.sleep(0.05)
         return self.number * observation.mean()  # dummy calculation
 
 
@@ -133,9 +133,9 @@ if __name__ == "__main__":
     n_sellers = 50
     n_buyers = 50
     n_environments = 15
-    n_processes = [1, 2, 4, 6, 8]
+    n_processes = [6]  # [1, 2, 4, 6, 8]
     times = []
-    n_iterations = 5
+    n_iterations = 1
     n_features = 100
 
     for n_proc in tqdm(n_processes, desc="n_processes"):
@@ -151,5 +151,5 @@ if __name__ == "__main__":
             duration += end - start
         times.append(duration / n_iterations)
 
-    df = pd.DataFrame(dict(n_processes=n_processes, times=times))
+    df = pd.DataFrame(dict(n_processes=n_processes, time=times))
     print(df)
