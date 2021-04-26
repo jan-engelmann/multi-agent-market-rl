@@ -19,15 +19,12 @@ class InformationSetting:
     def __init__(self):
         pass
 
-    def get_states(self, agent_ids, market):
+    def get_states(self, market):
         """
         Compute the observations of agents given the market object.
 
         Parameters
         ----------
-        agent_ids: list
-            A list of agent ids to compute the observations for.
-
         market: MarketEngine object
             The current market object.
 
@@ -39,8 +36,8 @@ class InformationSetting:
         """
         pass
 
-    def get_state(self, agent_id, market):
-        return self.get_states([agent_id], market)[agent_id]
+    def get_state(self, market):
+        return self.get_states(market)
 
 
 class BlackBoxSetting(InformationSetting):
@@ -101,7 +98,7 @@ class OfferInformationSetting(InformationSetting):
         self.n_offers = n_offers
         self.observation_space = Box(low=0, high=np.infty, shape=[2, n_offers])
 
-    def get_states(self, agent_ids, market):
+    def get_states(self, market):
         n = self.n_offers
         n_envs = market.n_environments
         n_agents = len(market.agent_ids)
