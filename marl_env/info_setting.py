@@ -121,7 +121,7 @@ class OfferInformationSetting(InformationSetting):
         # sort the buyer and seller actions inorder to find the N best offers of either side.
         # Best: seller --> lowest | buyer --> highest
         s_actions_sorted = s_actions.sort()[0][:, 0:n]
-        b_actions_sorted, _ = b_actions.sort(descending=True)[0][:, 0:n]
+        b_actions_sorted = b_actions.sort(descending=True)[0][:, 0:n]
 
         total_info[:, :, 0, :] = b_actions_sorted.unsqueeze_(0).expand(
             n_agents, n_envs, n
@@ -188,6 +188,9 @@ class TimeInformationWrapper(InformationSetting):
         This should be the same as the ``max_steps`` parameter in the market
         engine, as it determines the maximum number of time steps there can be.
 
+    TODO: Fix observation_space since we are now returning a tensor with n + 1 features, a tuple of observation spaces
+          is surely wrong...
+
     """
 
     def __init__(self, base_setting, max_steps=30):
@@ -197,12 +200,16 @@ class TimeInformationWrapper(InformationSetting):
             (base_setting.observation_space, Discrete(max_steps))
         )
 
-    def get_states(self, agent_ids, market):
-        base_obs = self.base_setting.get_states(agent_ids, market)
+    def get_states(self, market):
+        n_envs = market.n_environments
+        n_agents = market.n_agent_ids
+        base_obs = self.base_setting.get_states(market)
 
         # We want zero to indicate the initial state of the market and 1 to indicate the end state of the market.
         normalized_time = market.time / self.max_steps
-        result = {}
-        for agent_id, obs in base_obs.items():
-            result[agent_id] = (obs, normalized_time)
-        return result
+
+        time_info = torch.full((n_agents, n_envs, 1), normalized_time)
+        total_info = torch.cat((base_obs, time_info), -1)
+
+        # Return total_info with one added feature representing the current normalized market time.
+        return total_info
