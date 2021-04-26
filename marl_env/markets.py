@@ -8,7 +8,7 @@ class BaseMarketEngine:
         self.n_buyers = len(self.buyer_ids)
         self.seller_ids = set(seller_ids)
         self.n_sellers = len(self.seller_ids)
-        self.agent_ids = self.buyer_ids.union(self.seller_ids)
+        self.n_agent_ids = self.n_sellers + self.n_buyers
         self.max_steps = max_steps
         self.max_group_size = max(self.n_buyers, self.n_sellers)
         self.max_n_deals = min(self.n_buyers, self.n_sellers)

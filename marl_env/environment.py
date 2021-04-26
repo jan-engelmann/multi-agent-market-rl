@@ -29,7 +29,6 @@ class MultiAgentEnvironment:
         market,
         info_setting,
         n_environments,
-        n_features,
         worker_pool,
     ):
 
@@ -39,7 +38,6 @@ class MultiAgentEnvironment:
         self.max_n_deals = min(self.n_buyers, self.n_sellers)
         self.max_group_size = max(self.n_buyers, self.n_sellers)
         self.n_environments = n_environments  # batch_size
-        self.n_features = n_features
 
         self.sellers = sellers
         self.buyers = buyers
@@ -99,7 +97,6 @@ if __name__ == "__main__":
     n_processes = [1]  # [1, 2, 4, 6, 8]
     times = []
     n_iterations = 1
-    n_features = 13
     n_steps = 50
 
     sellers = [
@@ -126,7 +123,6 @@ if __name__ == "__main__":
                     market,
                     info_setting,
                     n_environments,
-                    n_features,
                     pool,
                 )
                 for i in range(n_steps):
