@@ -14,6 +14,7 @@ from tqdm import tqdm
 
 from marl_env.markets import MarketMatchHiLo
 from marl_env.agents import DummyAgent
+from marl_env.info_setting import OfferInformationSetting
 
 
 def get_agent_actions(agent, observation):
@@ -22,7 +23,14 @@ def get_agent_actions(agent, observation):
 
 class MultiAgentEnvironment:
     def __init__(
-        self, sellers, buyers, market, n_environments, n_features, worker_pool
+        self,
+        sellers,
+        buyers,
+        market,
+        info_setting,
+        n_environments,
+        n_features,
+        worker_pool,
     ):
 
         self.n_sellers = len(sellers)
@@ -37,6 +45,7 @@ class MultiAgentEnvironment:
         self.buyers = buyers
 
         self.market = market
+        self.info_setting: OfferInformationSetting = info_setting
 
         self.worker_pool = worker_pool
         self.reset()
@@ -45,9 +54,7 @@ class MultiAgentEnvironment:
         self.s_reservations = torch.rand(self.n_sellers)
         self.b_reservations = torch.rand(self.n_buyers)
         self.past_actions = []
-        self.observations = [
-            torch.rand(self.n_agents, self.n_environments, self.n_features)
-        ]  # filling with initial observation
+        self.observations = []
 
     def get_actions(self):
         # TODO: improve distributed calculation
@@ -70,19 +77,17 @@ class MultiAgentEnvironment:
         rewards_buyers = self.b_reservations[None, :] - deals_buyers
         return rewards_sellers, rewards_buyers
 
-    def store_observations(self, s_actions, b_actions, deals_sellers, deals_buyers):
+    def store_observations(self):
         # TODO: actually implement valid observations
-        self.observations.append(
-            torch.rand(self.n_agents, self.n_environments, self.n_features)
-        )
+        self.observations.append(self.info_setting.get_states(self.market))
 
     def step(self):
+        self.store_observations()
         s_actions, b_actions = self.get_actions()
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
-        self.store_observations(s_actions, b_actions, deals_sellers, deals_buyers)
 
         # print(deals_buyers, deals_sellers, rewards_buyers, rewards_sellers, sep="\n")
 
@@ -94,7 +99,7 @@ if __name__ == "__main__":
     n_processes = [1]  # [1, 2, 4, 6, 8]
     times = []
     n_iterations = 1
-    n_features = 100
+    n_features = 13
     n_steps = 50
 
     sellers = [
@@ -108,6 +113,7 @@ if __name__ == "__main__":
     buyer_ids = [agent.id for agent in buyers]
     seller_ids = [agent.id for agent in sellers]
     market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
+    info_setting = OfferInformationSetting(n_offers=3)
 
     for n_proc in tqdm(n_processes, desc="n_processes"):
         for it in tqdm(range(n_iterations), desc="n_iterations", leave=False):
@@ -115,7 +121,13 @@ if __name__ == "__main__":
             start = time.time()
             with mp.Pool(n_proc) as pool:
                 env = MultiAgentEnvironment(
-                    sellers, buyers, market, n_environments, n_features, pool
+                    sellers,
+                    buyers,
+                    market,
+                    info_setting,
+                    n_environments,
+                    n_features,
+                    pool,
                 )
                 for i in range(n_steps):
                     env.step()

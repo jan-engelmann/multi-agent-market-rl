@@ -6,6 +6,7 @@ import torch
 import numpy as np
 from gym.spaces import Discrete, Box, Tuple
 
+
 class InformationSetting:
     """
     Abstract information setting class.
@@ -50,6 +51,7 @@ class BlackBoxSetting(InformationSetting):
         Represents the last offer of the agent. Each element is a numpy array
         with a single entry. If there was no offer, it will be ``[0]``.
     """
+
     def __init__(self):
         self.observation_space = Box(low=0, high=np.infty, shape=[1])
 
@@ -94,6 +96,7 @@ class OfferInformationSetting(InformationSetting):
           But double check implementation to be sure...
           !!! market.n_environments not part of market !!!
     """
+
     def __init__(self, n_offers=5):
         self.n_offers = n_offers
         self.observation_space = Box(low=0, high=np.infty, shape=[2, n_offers])
@@ -114,11 +117,15 @@ class OfferInformationSetting(InformationSetting):
 
         # sort the buyer and seller actions inorder to find the N best offers of either side.
         # Best: seller --> lowest | buyer --> highest
-        s_actions_sorted, _ = s_actions.sort()[:, 0:n]
-        b_actions_sorted, _ = b_actions.sort(descending=True)[:, 0:n]
+        s_actions_sorted = s_actions.sort()[0][:, 0:n]
+        b_actions_sorted, _ = b_actions.sort(descending=True)[0][:, 0:n]
 
-        total_info[:, :, 0, :] = b_actions_sorted.unsqueeze_(0).expand(n_agents, n_envs, n)
-        total_info[:, :, 1, :] = s_actions_sorted.unsqueeze_(0).expand(n_agents, n_envs, n)
+        total_info[:, :, 0, :] = b_actions_sorted.unsqueeze_(0).expand(
+            n_agents, n_envs, n
+        )
+        total_info[:, :, 1, :] = s_actions_sorted.unsqueeze_(0).expand(
+            n_agents, n_envs, n
+        )
 
         # The information each agent gets is the same
         # Return total_info as tensor with shape (n_agents, n_envs, n_features) where n_features == 2 * n_offers
@@ -143,6 +150,7 @@ class DealInformationSetting(InformationSetting):
         Each element is a numpy array of shape ``(n_offers,)``. No deals will
         be represented by 0.
     """
+
     def __init__(self, n_deals=5):
         self.n_deals = n_deals
         self.observation_space = Box(low=0, high=np.infty, shape=[n_deals])
@@ -154,9 +162,10 @@ class DealInformationSetting(InformationSetting):
             # in a row, once for the buyer and once for the seller. Since
             # Python >= 3.6 dicts preserve the order of insertion, we can
             # rely on this to obtain the distinct deals that happened.
-            deals = list(market.deal_history[-1].values())[0:2*n:2]
-            deals = np.pad(deals, (0, n-len(deals))) # Pad it with zeros
-        else: deals = np.zeros(n)
+            deals = list(market.deal_history[-1].values())[0 : 2 * n : 2]
+            deals = np.pad(deals, (0, n - len(deals)))  # Pad it with zeros
+        else:
+            deals = np.zeros(n)
         return {agent_id: deals for agent_id in agent_ids}
 
 
@@ -177,11 +186,13 @@ class TimeInformationWrapper(InformationSetting):
         engine, as it determines the maximum number of time steps there can be.
 
     """
+
     def __init__(self, base_setting, max_steps=30):
         self.base_setting = base_setting
         self.max_steps = max_steps
-        self.observation_space = Tuple((base_setting.observation_space,
-                                        Discrete(max_steps)))
+        self.observation_space = Tuple(
+            (base_setting.observation_space, Discrete(max_steps))
+        )
 
     def get_states(self, agent_ids, market):
         base_obs = self.base_setting.get_states(agent_ids, market)
