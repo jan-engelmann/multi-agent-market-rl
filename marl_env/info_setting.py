@@ -116,7 +116,7 @@ class OfferInformationSetting(InformationSetting):
         s_actions = market.seller_history[-1].T
 
         # sort the buyer and seller actions inorder to find the N best offers of either side.
-        # Best: seller --> lowest // buyer --> highest
+        # Best: seller --> lowest | buyer --> highest
         s_actions_sorted, _ = s_actions.sort()[:, 0:n]
         b_actions_sorted, _ = b_actions.sort(descending=True)[:, 0:n]
 
