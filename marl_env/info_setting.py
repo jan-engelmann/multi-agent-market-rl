@@ -102,7 +102,7 @@ class OfferInformationSetting(InformationSetting):
 
     def __init__(self, n_offers=5):
         self.n_offers = n_offers
-        self.observation_space = Box(low=0, high=np.infty, shape=[2, n_offers])
+        self.observation_space = Box(low=0, high=np.infty, shape=[2 * n_offers])
 
     def get_states(self, market):
         n = self.n_offers
