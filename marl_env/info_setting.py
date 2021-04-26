@@ -55,23 +55,25 @@ class BlackBoxSetting(InformationSetting):
     def __init__(self):
         self.observation_space = Box(low=0, high=np.infty, shape=[1])
 
-    def get_states(self, agent_ids, market):
-        if not market.offer_history:
-            return {agent_id: np.array([0]) for agent_id in agent_ids}
+    def get_states(self, market):
+        n_envs = market.n_environments
+        n_agents = len(market.agent_ids)
+        n_sellers = market.n_sellers
+        total_info = torch.zeros(n_agents, n_envs, 1)
+        if not (market.buyer_history or market.seller_history):
+            return total_info
 
-        bids, asks = market.offer_history[-1]
-        # This might be a bit slow
-        bids = {agent_id: val for val, agent_id in bids}
-        asks = {agent_id: val for val, agent_id in asks}
-        result = {}
-        for agent_id in agent_ids:
-            if agent_id in bids:
-                result[agent_id] = np.array([bids[agent_id]])
-            elif agent_id in asks:
-                result[agent_id] = np.array([asks[agent_id]])
-            else:
-                result[agent_id] = np.array([0])
-        return result
+        b_actions = market.buyer_history[-1]
+        s_actions = market.seller_history[-1]
+
+        total_info[:n_sellers, :, 0] = s_actions
+        total_info[n_sellers:, :, 0] = b_actions
+
+        # Return total_info as tensor with shape (n_agents, n_envs, n_features) where n_features == 1
+        # Observations are ordered in the same way as res in MultiAgentEnvironment.get_actions().
+        # total_info[:n_sellers,:,:] contains all observations for the seller agents
+        # total_info[n_sellers:,:,:] contains all observations for the buyer agents
+        return total_info
 
 
 class OfferInformationSetting(InformationSetting):
@@ -95,6 +97,7 @@ class OfferInformationSetting(InformationSetting):
           space over all environments. Each agent should only have the observations coming from his environment.
           But double check implementation to be sure...
           !!! market.n_environments not part of market !!!
+          Look at observation_space, does it still have the shape (2, n_offers)?
     """
 
     def __init__(self, n_offers=5):
