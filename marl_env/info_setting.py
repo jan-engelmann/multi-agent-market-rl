@@ -104,9 +104,9 @@ class OfferInformationSetting(InformationSetting):
     def get_states(self, agent_ids, market):
         n = self.n_offers
         n_envs = market.n_environments
-        n_agents = market.n_agents
+        n_agents = len(market.agent_ids)
         total_info = torch.zeros(n_agents, n_envs, 2, n)
-        if not market.offer_history:
+        if not (market.buyer_history or market.seller_history):
             # Return total_info as tensor with shape (n_agents, n_envs, n_features) where n_features == 2 * n_offers
             return total_info.contiguous().view(n_agents, n_envs, -1)
 
