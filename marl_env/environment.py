@@ -12,17 +12,8 @@ import itertools
 import pandas as pd
 from tqdm import tqdm
 
-from marl_env.market import MarketEngine
-
-
-class Agent:
-    def __init__(self, agent_id, number):
-        self.number = number
-        self.id = agent_id
-
-    def get_action(self, observation: torch.Tensor):
-        # time.sleep(0.0005)
-        return self.number * observation.mean()  # dummy calculation
+from marl_env.markets import MarketMatchHiLo
+from marl_env.agents import DummyAgent
 
 
 def get_agent_actions(agent, observation):
@@ -30,30 +21,22 @@ def get_agent_actions(agent, observation):
 
 
 class MultiAgentEnvironment:
-    def __init__(self, n_sellers, n_buyers, n_environments, n_features, worker_pool):
+    def __init__(
+        self, sellers, buyers, market, n_environments, n_features, worker_pool
+    ):
 
-        self.n_sellers = n_sellers
-        self.n_buyers = n_buyers
-        self.n_agents = n_sellers + n_buyers
-        self.max_n_deals = min(n_buyers, n_sellers)
-        self.max_group_size = max(n_buyers, n_sellers)
+        self.n_sellers = len(sellers)
+        self.n_buyers = len(buyers)
+        self.n_agents = self.n_sellers + self.n_buyers
+        self.max_n_deals = min(self.n_buyers, self.n_sellers)
+        self.max_group_size = max(self.n_buyers, self.n_sellers)
         self.n_environments = n_environments  # batch_size
         self.n_features = n_features
 
-        # TODO: implement proper agent
-        self.sellers = [
-            Agent(idx, num)
-            for idx, num in enumerate(torch.rand(n_sellers, n_environments))
-        ]
-        self.buyers = [
-            Agent(idx, num)
-            for idx, num in enumerate(torch.rand(n_buyers, n_environments))
-        ]
+        self.sellers = sellers
+        self.buyers = buyers
 
-        buyer_ids = [agent.id for agent in self.buyers]
-        seller_ids = [agent.id for agent in self.sellers]
-
-        self.market = MarketEngine(buyer_ids, seller_ids, max_steps=30)
+        self.market = market
 
         self.worker_pool = worker_pool
         self.reset()
@@ -114,13 +97,25 @@ if __name__ == "__main__":
     n_features = 100
     n_steps = 50
 
+    sellers = [
+        DummyAgent(idx, num)
+        for idx, num in enumerate(torch.rand(n_sellers, n_environments))
+    ]
+    buyers = [
+        DummyAgent(idx, num)
+        for idx, num in enumerate(torch.rand(n_buyers, n_environments))
+    ]
+    buyer_ids = [agent.id for agent in buyers]
+    seller_ids = [agent.id for agent in sellers]
+    market = MarketMatchHiLo(buyer_ids, seller_ids, max_steps=30)
+
     for n_proc in tqdm(n_processes, desc="n_processes"):
         for it in tqdm(range(n_iterations), desc="n_iterations", leave=False):
             duration = 0.0
             start = time.time()
             with mp.Pool(n_proc) as pool:
                 env = MultiAgentEnvironment(
-                    n_sellers, n_buyers, n_environments, n_features, pool
+                    sellers, buyers, market, n_environments, n_features, pool
                 )
                 for i in range(n_steps):
                     env.step()
