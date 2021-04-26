@@ -48,10 +48,9 @@ class MultiAgentEnvironment:
         self.info_setting: OfferInformationSetting = info_setting
 
         self.worker_pool = worker_pool
-
+        # TODO: check if this observation space is correct
         self.observation_space = Box(
-            low=-np.inf, high=np.inf,
-            shape=self.info_setting.observation_space.shape
+            low=-np.inf, high=np.inf, shape=self.info_setting.observation_space.shape
         )
         self.reset()
 
