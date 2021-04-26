@@ -57,7 +57,7 @@ class BlackBoxSetting(InformationSetting):
 
     def get_states(self, market):
         n_envs = market.n_environments
-        n_agents = len(market.agent_ids)
+        n_agents = market.n_agents
         n_sellers = market.n_sellers
         total_info = torch.zeros(n_agents, n_envs, 1)
         if not (market.buyer_history or market.seller_history):
@@ -107,7 +107,7 @@ class OfferInformationSetting(InformationSetting):
     def get_states(self, market):
         n = self.n_offers
         n_envs = market.n_environments
-        n_agents = market.n_agent_ids
+        n_agents = market.n_agents
         total_info = torch.zeros(n_agents, n_envs, 2, n)
         if not (market.buyer_history or market.seller_history):
             # Return total_info as tensor with shape (n_agents, n_envs, n_features) where n_features == 2 * n_offers
@@ -115,13 +115,13 @@ class OfferInformationSetting(InformationSetting):
 
         # Each history contains a list of tensors of shape (n_agents, n_environments) for sellers and buyers
         # respectively
-        b_actions = market.buyer_history[-1].T
-        s_actions = market.seller_history[-1].T
+        b_actions = market.buyer_history[-1]
+        s_actions = market.seller_history[-1]
 
         # sort the buyer and seller actions inorder to find the N best offers of either side.
         # Best: seller --> lowest | buyer --> highest
-        s_actions_sorted = s_actions.sort()[0][:, 0:n]
-        b_actions_sorted = b_actions.sort(descending=True)[0][:, 0:n]
+        s_actions_sorted = s_actions.sort()[0][:, :n]
+        b_actions_sorted = b_actions.sort(descending=True)[0][:, :n]
 
         total_info[:, :, 0, :] = b_actions_sorted.unsqueeze_(0).expand(
             n_agents, n_envs, n
@@ -202,7 +202,7 @@ class TimeInformationWrapper(InformationSetting):
 
     def get_states(self, market):
         n_envs = market.n_environments
-        n_agents = market.n_agent_ids
+        n_agents = market.n_agents
         base_obs = self.base_setting.get_states(market)
 
         # We want zero to indicate the initial state of the market and 1 to indicate the end state of the market.

@@ -14,7 +14,7 @@ from tqdm import tqdm
 
 from marl_env.markets import MarketMatchHiLo
 from marl_env.agents import DummyAgent
-from marl_env.info_setting import OfferInformationSetting
+from marl_env.info_setting import BlackBoxSetting, OfferInformationSetting
 
 
 def get_agent_actions(agent, observation):
@@ -110,8 +110,8 @@ if __name__ == "__main__":
     buyer_ids = [agent.id for agent in buyers]
     seller_ids = [agent.id for agent in sellers]
     market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
-    info_setting = OfferInformationSetting(n_offers=3)
-
+    # info_setting = OfferInformationSetting(n_offers=3)
+    info_setting = BlackBoxSetting()
     for n_proc in tqdm(n_processes, desc="n_processes"):
         for it in tqdm(range(n_iterations), desc="n_iterations", leave=False):
             duration = 0.0
