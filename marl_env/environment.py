@@ -15,6 +15,8 @@ from tqdm import tqdm
 from marl_env.markets import MarketMatchHiLo
 from marl_env.agents import DummyAgent
 from marl_env.info_setting import BlackBoxSetting, OfferInformationSetting
+from gym.spaces import Box
+import numpy as np
 
 
 def get_agent_actions(agent, observation):
@@ -46,6 +48,11 @@ class MultiAgentEnvironment:
         self.info_setting: OfferInformationSetting = info_setting
 
         self.worker_pool = worker_pool
+
+        self.observation_space = Box(
+            low=-np.inf, high=np.inf,
+            shape=self.info_setting.observation_space.shape
+        )
         self.reset()
 
     def reset(self):
