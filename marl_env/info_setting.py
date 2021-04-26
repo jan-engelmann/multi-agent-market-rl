@@ -63,8 +63,8 @@ class BlackBoxSetting(InformationSetting):
         if not (market.buyer_history or market.seller_history):
             return total_info
 
-        b_actions = market.buyer_history[-1]
-        s_actions = market.seller_history[-1]
+        b_actions = market.buyer_history[-1].T
+        s_actions = market.seller_history[-1].T
 
         total_info[:n_sellers, :, 0] = s_actions
         total_info[n_sellers:, :, 0] = b_actions
