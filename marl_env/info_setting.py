@@ -95,6 +95,7 @@ class OfferInformationSetting(InformationSetting):
     TODO: Think about environment number for observation_space. I don't think it makes sense to have an observation
           space over all environments. Each agent should only have the observations coming from his environment.
           But double check implementation to be sure...
+          !!! market.n_environments not part of market !!!
     """
     def __init__(self, n_offers=5):
         self.n_offers = n_offers
@@ -103,26 +104,28 @@ class OfferInformationSetting(InformationSetting):
     def get_states(self, agent_ids, market):
         n = self.n_offers
         n_envs = market.n_environments
-        offers = torch.zeros(2, n, n_envs)
+        n_agents = market.n_agents
+        total_info = torch.zeros(n_agents, n_envs, 2, n)
         if not market.offer_history:
-            return {agent_id: offers for agent_id in agent_ids}
+            # Return total_info as tensor with shape (n_agents, n_envs, n_features) where n_features == 2 * n_offers
+            return total_info.contiguous().view(n_agents, n_envs, -1)
 
         # Each history contains a list of tensors of shape (n_agents, n_environments) for sellers and buyers
         # respectively
-        b_actions = market.buyer_history[-1]
-        s_actions = market.seller_history[-1]
+        b_actions = market.buyer_history[-1].T
+        s_actions = market.seller_history[-1].T
 
         # sort the buyer and seller actions inorder to find the N best offers of either side.
         # Best: seller --> lowest // buyer --> highest
-        s_actions_sorted, _ = s_actions.sort()
-        b_actions_sorted, _ = b_actions.sort(descending=True)
+        s_actions_sorted, _ = s_actions.sort()[:, 0:n]
+        b_actions_sorted, _ = b_actions.sort(descending=True)[:, 0:n]
 
-        offers[0, :, :] = b_actions_sorted[0:n, :]
-        offers[1, :, :] = s_actions_sorted[0:n, :]
+        total_info[:, :, 0, :] = b_actions_sorted.unsqueeze_(0).expand(n_agents, n_envs, n)
+        total_info[:, :, 1, :] = s_actions_sorted.unsqueeze_(0).expand(n_agents, n_envs, n)
 
         # The information each agent gets is the same
-        # offers hase shape (2, n_offers, n_environments), n_environments comes from market
-        return {agent_id: offers for agent_id in agent_ids}
+        # Return total_info as tensor with shape (n_agents, n_envs, n_features) where n_features == 2 * n_offers
+        return total_info.contiguous().view(n_agents, n_envs, -1)
 
 
 class DealInformationSetting(InformationSetting):
