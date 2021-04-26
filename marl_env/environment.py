@@ -1,3 +1,10 @@
+if __name__ == "__main__":
+    import sys
+    import os
+
+    sys.path.insert(0, os.path.abspath("."))
+    print(sys.path)
+
 import torch
 import torch.multiprocessing as mp
 import time
@@ -5,14 +12,15 @@ import itertools
 import pandas as pd
 from tqdm import tqdm
 
-from marl_env import market
+from marl_env.market import MarketEngine
 
 
 class Agent:
-    def __init__(self, number):
+    def __init__(self, agent_id, number):
         self.number = number
+        self.id = agent_id
 
-    def get_action(self, observation: torch.tensor):
+    def get_action(self, observation: torch.Tensor):
         # time.sleep(0.0005)
         return self.number * observation.mean()  # dummy calculation
 
@@ -33,13 +41,19 @@ class MultiAgentEnvironment:
         self.n_features = n_features
 
         # TODO: implement proper agent
-        self.sellers = [Agent(num) for num in torch.rand(n_sellers, n_environments)]
-        self.buyers = [Agent(num) for num in torch.rand(n_buyers, n_environments)]
+        self.sellers = [
+            Agent(idx, num)
+            for idx, num in enumerate(torch.rand(n_sellers, n_environments))
+        ]
+        self.buyers = [
+            Agent(idx, num)
+            for idx, num in enumerate(torch.rand(n_buyers, n_environments))
+        ]
 
         buyer_ids = [agent.id for agent in self.buyers]
         seller_ids = [agent.id for agent in self.sellers]
 
-        self.market = market.MarketEngine(buyer_ids, seller_ids, max_steps=30)
+        self.market = MarketEngine(buyer_ids, seller_ids, max_steps=30)
 
         self.worker_pool = worker_pool
         self.reset()
@@ -81,7 +95,7 @@ class MultiAgentEnvironment:
 
     def step(self):
         s_actions, b_actions = self.get_actions()
-        deals_sellers, deals_buyers = self.market.calculate_deals(s_actions, b_actions)
+        deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
@@ -112,7 +126,8 @@ if __name__ == "__main__":
                     env.step()
             end = time.time()
             duration += end - start
-        times.append(duration / n_iterations)
+        times.append(duration / n_iterations)  # type: ignore
 
     df = pd.DataFrame(dict(n_processes=n_processes, time=times))
     print(df)
+    print("Finished")
