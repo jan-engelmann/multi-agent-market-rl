@@ -2,8 +2,8 @@ import torch
 import typing
 
 
-class MarketEngine:
-    def __init__(self, buyer_ids, seller_ids, max_steps=30):
+class BaseMarketEngine:
+    def __init__(self, buyer_ids, seller_ids, n_environments, max_steps=30):
         self.buyer_ids = set(buyer_ids)
         self.n_buyers = len(self.buyer_ids)
         self.seller_ids = set(seller_ids)
@@ -12,6 +12,7 @@ class MarketEngine:
         self.max_steps = max_steps
         self.max_group_size = max(self.n_buyers, self.n_sellers)
         self.max_n_deals = min(self.n_buyers, self.n_sellers)
+        self.n_environments = n_environments
         self.reset()
 
     def reset(self):
@@ -20,6 +21,12 @@ class MarketEngine:
         self.buyer_history = list()
         self.seller_history = list()
         self.deal_history = list()
+
+    def calculate_deals(
+        self, s_actions: torch.Tensor, b_actions: torch.Tensor
+    ) -> typing.Tuple[torch.Tensor, torch.Tensor]:
+
+        raise NotImplementedError
 
     def step(
         self, s_actions: torch.Tensor, b_actions: torch.Tensor
@@ -45,6 +52,13 @@ class MarketEngine:
         self.time += 1
 
         return deals_sellers, deals_buyers
+
+
+class MarketMatchHiLo(BaseMarketEngine):
+    def __init__(self, buyer_ids, seller_ids, n_environments, max_steps=30):
+        super(MarketMatchHiLo, self).__init__(
+            buyer_ids, seller_ids, n_environments, max_steps=30
+        )
 
     def calculate_deals(self, s_actions, b_actions):
         # sort actions of sellers and buyers
