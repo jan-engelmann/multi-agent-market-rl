@@ -1,3 +1,10 @@
+if __name__ == "__main__":
+    import sys
+    import os
+
+    sys.path.insert(0, os.path.abspath("."))
+    print(sys.path)
+
 import torch
 import torch.multiprocessing as mp
 import time
@@ -5,12 +12,15 @@ import itertools
 import pandas as pd
 from tqdm import tqdm
 
+from marl_env.market import MarketEngine
+
 
 class Agent:
-    def __init__(self, number):
+    def __init__(self, agent_id, number):
         self.number = number
+        self.id = agent_id
 
-    def get_action(self, observation: torch.tensor):
+    def get_action(self, observation: torch.Tensor):
         # time.sleep(0.0005)
         return self.number * observation.mean()  # dummy calculation
 
@@ -30,9 +40,20 @@ class MultiAgentEnvironment:
         self.n_environments = n_environments  # batch_size
         self.n_features = n_features
 
-        # TODO implement proper agent
-        self.sellers = [Agent(num) for num in torch.rand(n_sellers, n_environments)]
-        self.buyers = [Agent(num) for num in torch.rand(n_buyers, n_environments)]
+        # TODO: implement proper agent
+        self.sellers = [
+            Agent(idx, num)
+            for idx, num in enumerate(torch.rand(n_sellers, n_environments))
+        ]
+        self.buyers = [
+            Agent(idx, num)
+            for idx, num in enumerate(torch.rand(n_buyers, n_environments))
+        ]
+
+        buyer_ids = [agent.id for agent in self.buyers]
+        seller_ids = [agent.id for agent in self.sellers]
+
+        self.market = MarketEngine(buyer_ids, seller_ids, max_steps=30)
 
         self.worker_pool = worker_pool
         self.reset()
@@ -46,7 +67,7 @@ class MultiAgentEnvironment:
         ]  # filling with initial observation
 
     def get_actions(self):
-        # TODO improve distributed calculation
+        # TODO: improve distributed calculation
         agent_observation_tuples = [
             (agent, obs)
             for agent, obs in zip(
@@ -61,59 +82,20 @@ class MultiAgentEnvironment:
         ).T
         return torch.split(res, [self.n_sellers, self.n_buyers], dim=1)
 
-    def calculate_deals(self, s_actions, b_actions):
-        # sort actions of sellers and buyers
-        # using mechanism that highest buying offer is matched with lowest selling offer
-        s_actions_sorted, s_actions_indices = s_actions.sort()
-        b_actions_sorted, b_actions_indices = b_actions.sort(descending=True)
-
-        # get mask for all deals that happen
-        bid_offer_diffs = torch.zeros(self.n_environments, self.max_group_size)
-        bid_offer_diffs[:, : self.max_n_deals] = (
-            b_actions_sorted[:, : self.max_n_deals]
-            - s_actions_sorted[:, : self.max_n_deals]
-        )
-        no_deal_mask = (
-            bid_offer_diffs <= 0
-        )  # if true => no deal, if the bid is lower than the offer no deal happens
-
-        s_realized_sorted_deals = s_actions_sorted.clone()
-        s_realized_sorted_deals[no_deal_mask[:, : self.n_sellers]] = 0
-
-        b_realized_sorted_deals = b_actions_sorted.clone()
-        b_realized_sorted_deals[no_deal_mask[:, : self.n_buyers]] = 0
-
-        # calculating deal prices
-        sorted_deal_prices = torch.zeros(self.n_environments, self.max_group_size)
-        sorted_deal_prices[:, : self.max_n_deals] = (
-            b_realized_sorted_deals[:, : self.max_n_deals]
-            + s_realized_sorted_deals[:, : self.max_n_deals]
-        ) / 2.0
-
-        # getting the realized prices in the original ordering for buyers&sellers, no deal means 0
-        deals_buyers_orginal = sorted_deal_prices[:, : self.n_buyers].gather(
-            1, b_actions_indices.argsort(1)
-        )
-
-        deals_sellers_orginal = sorted_deal_prices[:, : self.n_sellers].gather(
-            1, s_actions_indices.argsort(1)
-        )
-        return deals_sellers_orginal, deals_buyers_orginal
-
     def calculate_rewards(self, deals_sellers, deals_buyers):
         rewards_sellers = deals_sellers - self.s_reservations[None, :]
         rewards_buyers = self.b_reservations[None, :] - deals_buyers
         return rewards_sellers, rewards_buyers
 
     def store_observations(self, s_actions, b_actions, deals_sellers, deals_buyers):
-        # TODO actually implement valid observations
+        # TODO: actually implement valid observations
         self.observations.append(
             torch.rand(self.n_agents, self.n_environments, self.n_features)
         )
 
     def step(self):
         s_actions, b_actions = self.get_actions()
-        deals_sellers, deals_buyers = self.calculate_deals(s_actions, b_actions)
+        deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
@@ -126,9 +108,9 @@ if __name__ == "__main__":
     n_sellers = 50
     n_buyers = 50
     n_environments = 15
-    n_processes = [1, 2, 4, 6, 8]
+    n_processes = [1]  # [1, 2, 4, 6, 8]
     times = []
-    n_iterations = 5
+    n_iterations = 1
     n_features = 100
     n_steps = 50
 
@@ -144,7 +126,8 @@ if __name__ == "__main__":
                     env.step()
             end = time.time()
             duration += end - start
-        times.append(duration / n_iterations)
+        times.append(duration / n_iterations)  # type: ignore
 
     df = pd.DataFrame(dict(n_processes=n_processes, time=times))
     print(df)
+    print("Finished")
