@@ -3,7 +3,7 @@ import typing
 
 
 class BaseMarketEngine:
-    def __init__(self, buyer_ids, seller_ids, max_steps=30):
+    def __init__(self, buyer_ids, seller_ids, n_environments, max_steps=30):
         self.buyer_ids = set(buyer_ids)
         self.n_buyers = len(self.buyer_ids)
         self.seller_ids = set(seller_ids)
@@ -12,6 +12,7 @@ class BaseMarketEngine:
         self.max_steps = max_steps
         self.max_group_size = max(self.n_buyers, self.n_sellers)
         self.max_n_deals = min(self.n_buyers, self.n_sellers)
+        self.n_environments = n_environments
         self.reset()
 
     def reset(self):
@@ -54,8 +55,10 @@ class BaseMarketEngine:
 
 
 class MarketMatchHiLo(BaseMarketEngine):
-    def __init__(self, buyer_ids, seller_ids, max_steps=30):
-        super(MarketMatchHiLo, self).__init__(buyer_ids, seller_ids, max_steps=30)
+    def __init__(self, buyer_ids, seller_ids, n_environments, max_steps=30):
+        super(MarketMatchHiLo, self).__init__(
+            buyer_ids, seller_ids, n_environments, max_steps=30
+        )
 
     def calculate_deals(self, s_actions, b_actions):
         # sort actions of sellers and buyers

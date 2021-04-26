@@ -107,7 +107,7 @@ if __name__ == "__main__":
     ]
     buyer_ids = [agent.id for agent in buyers]
     seller_ids = [agent.id for agent in sellers]
-    market = MarketMatchHiLo(buyer_ids, seller_ids, max_steps=30)
+    market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
 
     for n_proc in tqdm(n_processes, desc="n_processes"):
         for it in tqdm(range(n_iterations), desc="n_iterations", leave=False):
