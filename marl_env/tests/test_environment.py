@@ -11,7 +11,6 @@ def test_create_env_offer_info():
     n_sellers = 50
     n_buyers = 50
     n_environments = 15
-    n_proc = 3
 
     sellers = [
         DummyAgent(idx, num)
@@ -25,16 +24,14 @@ def test_create_env_offer_info():
     seller_ids = [agent.id for agent in sellers]
     market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
     info_setting = OfferInformationSetting(n_offers=3)
-    with mp.Pool(n_proc) as pool:
-        env = MultiAgentEnvironment(
-            sellers,
-            buyers,
-            market,
-            info_setting,
-            n_environments,
-            pool,
-        )
-        env.step()
+    env = MultiAgentEnvironment(
+        sellers,
+        buyers,
+        market,
+        info_setting,
+        n_environments,
+    )
+    env.step()
     return env
 
 
@@ -42,7 +39,6 @@ def test_create_env_black_box():
     n_sellers = 50
     n_buyers = 50
     n_environments = 15
-    n_proc = 3
 
     sellers = [
         DummyAgent(idx, num)
@@ -56,15 +52,13 @@ def test_create_env_black_box():
     seller_ids = [agent.id for agent in sellers]
     market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
     info_setting = BlackBoxSetting()
-    with mp.Pool(n_proc) as pool:
-        env = MultiAgentEnvironment(
-            sellers,
-            buyers,
-            market,
-            info_setting,
-            n_environments,
-            pool,
-        )
-        for i in range(20):
-            env.step()
+    env = MultiAgentEnvironment(
+        sellers,
+        buyers,
+        market,
+        info_setting,
+        n_environments,
+    )
+    for i in range(20):
+        env.step()
     return env

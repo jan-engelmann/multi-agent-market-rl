@@ -62,8 +62,12 @@ class MultiAgentEnvironment:
         self.b_reservations = torch.rand(self.n_buyers)
 
         # Create a mask keeping track of which agent is already done in the current game.
-        self.done_sellers = torch.full((self.n_environments, self.n_sellers), False, dtype=torch.bool)
-        self.done_buyers = torch.full((self.n_environments, self.n_buyers), False, dtype=torch.bool)
+        self.done_sellers = torch.full(
+            (self.n_environments, self.n_sellers), False, dtype=torch.bool
+        )
+        self.done_buyers = torch.full(
+            (self.n_environments, self.n_buyers), False, dtype=torch.bool
+        )
 
         self.past_actions = []
         self.observations = []
@@ -91,7 +95,7 @@ class MultiAgentEnvironment:
         rewards_buyers = self.b_reservations[None, :] - deals_buyers
 
         # Agents who are finished since the previous round receive a zero reward.
-        # Rethink if this is logical...
+        # TODO: Rethink if this is logical...
         rewards_sellers[self.done_sellers] = 0
         rewards_buyers[self.done_buyers] = 0
 
