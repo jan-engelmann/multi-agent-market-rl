@@ -3,15 +3,13 @@ import typing
 
 
 class BaseMarketEngine:
-    def __init__(self, buyer_ids, seller_ids, n_environments, max_steps=30):
-        self.buyer_ids = set(buyer_ids)
-        self.n_buyers = len(self.buyer_ids)
-        self.seller_ids = set(seller_ids)
-        self.n_sellers = len(self.seller_ids)
-        self.n_agents = self.n_sellers + self.n_buyers
+    def __init__(self, n_sellers, n_buyers, n_environments, max_steps=30):
+        self.n_sellers = n_sellers
+        self.n_buyers = n_buyers
+        self.n_agents = n_sellers + n_buyers
         self.max_steps = max_steps
-        self.max_group_size = max(self.n_buyers, self.n_sellers)
-        self.max_n_deals = min(self.n_buyers, self.n_sellers)
+        self.max_group_size = max(n_buyers, n_sellers)
+        self.max_n_deals = min(n_buyers, n_sellers)
         self.n_environments = n_environments
         self.reset()
 

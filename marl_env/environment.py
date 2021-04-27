@@ -3,7 +3,6 @@ if __name__ == "__main__":
     import os
 
     sys.path.insert(0, os.path.abspath("."))
-    print(sys.path)
 
 import gym
 import torch
@@ -47,6 +46,7 @@ class MultiAgentEnvironment:
 
         self.sellers = sellers
         self.buyers = buyers
+        self.all_agents = sellers + buyers
 
         self.market = market
         self.info_setting: OfferInformationSetting = info_setting
@@ -113,8 +113,10 @@ class MultiAgentEnvironment:
         # We set the asking price of sellers who are done to max(b_reservations) + 1
         # and the biding price of buyers who are done to zero
         # This results in actions not capable of producing a deal and therefore not interfering with other agents.
-        s_actions[self.done_sellers] = self.b_reservations.max() + 1
-        b_actions[self.done_buyers] = 0
+        s_actions = torch.where(
+            self.done_sellers, self.b_reservations.max() + 1.0, s_actions
+        )
+        b_actions = torch.where(self.done_buyers, torch.FloatTensor([0]), b_actions)
 
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
         newly_finished_sellers = deals_sellers > 0
@@ -129,8 +131,13 @@ class MultiAgentEnvironment:
         # get a zero reward.
         self.done_sellers += newly_finished_sellers
         self.done_buyers += newly_finished_buyers
+        # TODO: break if no more deals can be made!
 
-        print("made one step")
+        return (
+            self.observations[-1],
+            (rewards_sellers, rewards_buyers),
+            (s_actions, b_actions),
+        )
 
 
 if __name__ == "__main__":
