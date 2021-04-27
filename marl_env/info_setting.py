@@ -170,8 +170,8 @@ class DealInformationSetting(InformationSetting):
 
         # Get the best n best deals from the last round.
         # deal_history is already sorted.
-        total_info = market.deal_history[-1][:, :n].unsqueeze_(0).expand(
-            n_agents, n_envs, n
+        total_info = (
+            market.deal_history[-1][:, :n].unsqueeze_(0).expand(n_agents, n_envs, n)
         )
         return total_info
 
@@ -197,7 +197,9 @@ class TimeInformationWrapper(InformationSetting):
     def __init__(self, base_setting, max_steps=30):
         self.base_setting = base_setting
         self.max_steps = max_steps
-        self.observation_space = Box(low=0, high=np.infty, shape=[base_setting.observation_space.shape[0] + 1])
+        self.observation_space = Box(
+            low=0, high=np.infty, shape=[base_setting.observation_space.shape[0] + 1]
+        )
 
     def get_states(self, market):
         n_envs = market.n_environments
@@ -206,6 +208,7 @@ class TimeInformationWrapper(InformationSetting):
 
         # We want zero to indicate the initial state of the market and 1 to indicate the end state of the market.
         normalized_time = market.time / self.max_steps
+        assert normalized_time <= 1  # otherwise time constraint violated
 
         time_info = torch.full((n_agents, n_envs, 1), normalized_time)
         total_info = torch.cat((base_obs, time_info), -1)
