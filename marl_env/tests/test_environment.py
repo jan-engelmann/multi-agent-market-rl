@@ -20,9 +20,8 @@ def test_create_env_offer_info():
         DummyAgent(idx, num)
         for idx, num in enumerate(torch.rand(n_buyers, n_environments))
     ]
-    buyer_ids = [agent.id for agent in buyers]
-    seller_ids = [agent.id for agent in sellers]
-    market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
+
+    market = MarketMatchHiLo(n_sellers, n_buyers, n_environments, max_steps=30)
     info_setting = OfferInformationSetting(n_offers=3)
     env = MultiAgentEnvironment(
         sellers,
@@ -48,9 +47,8 @@ def test_create_env_black_box():
         DummyAgent(idx, num)
         for idx, num in enumerate(torch.rand(n_buyers, n_environments))
     ]
-    buyer_ids = [agent.id for agent in buyers]
-    seller_ids = [agent.id for agent in sellers]
-    market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
+
+    market = MarketMatchHiLo(n_sellers, n_buyers, n_environments, max_steps=30)
     info_setting = BlackBoxSetting()
     env = MultiAgentEnvironment(
         sellers,

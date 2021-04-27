@@ -105,6 +105,9 @@ class OfferInformationSetting(InformationSetting):
         self.observation_space = Box(low=0, high=np.infty, shape=[2 * n_offers])
 
     def get_states(self, market):
+        assert self.n_offers <= market.n_buyers
+        assert self.n_offers <= market.n_sellers
+
         n = self.n_offers
         n_envs = market.n_environments
         n_agents = market.n_agents
@@ -208,6 +211,7 @@ class TimeInformationWrapper(InformationSetting):
 
         # We want zero to indicate the initial state of the market and 1 to indicate the end state of the market.
         normalized_time = market.time / self.max_steps
+        # TODO: put this together with environment time constraints
         assert normalized_time <= 1  # otherwise time constraint violated
 
         time_info = torch.full((n_agents, n_envs, 1), normalized_time)

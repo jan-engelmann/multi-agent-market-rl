@@ -32,3 +32,11 @@ class TimeAgent:
             self.reservation_price
             + sign * (1 - observation[:, :, -1].mean()) * self.reservation_price
         )
+
+
+class LinearAgent:
+    def __init__(self, n_features) -> None:
+        self.model = torch.nn.Linear(in_features=n_features, out_features=1)
+
+    def get_action(self, observation):
+        return self.model(observation).squeeze(1)
