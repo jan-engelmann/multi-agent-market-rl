@@ -68,6 +68,8 @@ class MultiAgentEnvironment:
         self.done_buyers = torch.full(
             (self.n_environments, self.n_buyers), False, dtype=torch.bool
         )
+        self.newly_finished_sellers = self.done_sellers.clone()
+        self.newly_finished_buyers = self.done_buyers.clone()
 
         self.past_actions = []
         self.observations = []
@@ -106,6 +108,12 @@ class MultiAgentEnvironment:
         self.observations.append(self.info_setting.get_states(self.market))
 
     def step(self):
+        # Update the mask keeping track of which agents are done in the current game.
+        # This is done with the mask computed in the previous round. Since only agents who were finished since the
+        # previous round should get a zero reward.
+        self.done_sellers += self.newly_finished_sellers
+        self.done_buyers += self.newly_finished_buyers
+
         self.store_observations()
         s_actions, b_actions = self.get_actions()
 
@@ -117,20 +125,15 @@ class MultiAgentEnvironment:
         b_actions[self.done_buyers] = 0
 
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
-        newly_finished_sellers = deals_sellers > 0
-        newly_finished_buyers = deals_buyers > 0
+        self.newly_finished_sellers = deals_sellers > 0
+        self.newly_finished_buyers = deals_buyers > 0
 
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
-
-        # Update the mask keeping track of which agents are done in the current game.
-        # This is done after calculating the reward. Since only agents who were finished since the previous round should
-        # get a zero reward.
-        self.done_sellers += newly_finished_sellers
-        self.done_buyers += newly_finished_buyers
-
         print("made one step")
+
+        return rewards_sellers, rewards_buyers
 
 
 if __name__ == "__main__":
