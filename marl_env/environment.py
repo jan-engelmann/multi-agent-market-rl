@@ -5,6 +5,7 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath("."))
     print(sys.path)
 
+import gym
 import torch
 import torch.multiprocessing as mp
 import time
@@ -14,7 +15,11 @@ from tqdm import tqdm
 
 from marl_env.markets import MarketMatchHiLo
 from marl_env.agents import DummyAgent
-from marl_env.info_setting import BlackBoxSetting, OfferInformationSetting
+from marl_env.info_setting import (
+    BlackBoxSetting,
+    OfferInformationSetting,
+    TimeInformationWrapper,
+)
 from gym.spaces import Box
 import numpy as np
 
@@ -92,8 +97,7 @@ class MultiAgentEnvironment:
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
-
-        # print(deals_buyers, deals_sellers, rewards_buyers, rewards_sellers, sep="\n")
+        print("made one step")
 
 
 if __name__ == "__main__":
