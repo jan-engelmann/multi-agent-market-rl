@@ -62,6 +62,11 @@ class MultiAgentEnvironment:
     def reset(self):
         self.s_reservations = torch.rand(self.n_sellers)
         self.b_reservations = torch.rand(self.n_buyers)
+
+        # Create a mask keeping track of which agent is already done in the current game.
+        self.done_sellers = torch.full((self.n_environments, self.n_sellers), False, dtype=torch.bool)
+        self.done_buyers = torch.full((self.n_environments, self.n_buyers), False, dtype=torch.bool)
+
         self.past_actions = []
         self.observations = []
 
@@ -84,6 +89,12 @@ class MultiAgentEnvironment:
     def calculate_rewards(self, deals_sellers, deals_buyers):
         rewards_sellers = deals_sellers - self.s_reservations[None, :]
         rewards_buyers = self.b_reservations[None, :] - deals_buyers
+
+        # Agents who are finished receive a zero reward.
+        # Rethink if this is logical...
+        rewards_sellers[self.done_sellers] = 0
+        rewards_buyers[self.done_buyers] = 0
+
         return rewards_sellers, rewards_buyers
 
     def store_observations(self):
@@ -93,21 +104,39 @@ class MultiAgentEnvironment:
     def step(self):
         self.store_observations()
         s_actions, b_actions = self.get_actions()
+
+        # Mask seller and buyer actions for agents which are already done
+        # We set the asking price of sellers who are done to max(b_reservations) + 1
+        # and the biding price of buyers who are done to zero
+        # This results in actions not capable of producing a deal and therefore not interfering with other agents.
+        s_actions[self.done_sellers] = self.b_reservations.max() + 1
+        b_actions[self.done_buyers] = 0
+
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
+        newly_finished_sellers = deals_sellers > 0
+        newly_finished_buyers = deals_buyers > 0
+
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
+
+        # Update the mask keeping track of which agents are done in the current game.
+        # This is done after calculating the reward. Since only agents who were finished since the previous round should
+        # get a zero reward.
+        self.done_sellers += newly_finished_sellers
+        self.done_buyers += newly_finished_buyers
+
         print("made one step")
 
 
 if __name__ == "__main__":
-    n_sellers = 50
-    n_buyers = 50
-    n_environments = 15
+    n_sellers = 5
+    n_buyers = 5
+    n_environments = 2
     n_processes = [1]  # [1, 2, 4, 6, 8]
     times = []
     n_iterations = 1
-    n_steps = 50
+    n_steps = 5
 
     sellers = [
         DummyAgent(idx, num)
