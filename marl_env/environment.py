@@ -96,8 +96,12 @@ class MultiAgentEnvironment:
 
         # Agents who are finished since the previous round receive a zero reward.
         # TODO: Rethink if this is logical...
-        rewards_sellers[self.done_sellers] = 0
-        rewards_buyers[self.done_buyers] = 0
+        rewards_sellers = torch.where(
+            self.done_sellers, torch.FloatTensor([0]), rewards_sellers
+        )
+        rewards_buyers = torch.where(
+            self.done_buyers, torch.FloatTensor([0]), rewards_buyers
+        )
 
         return rewards_sellers, rewards_buyers
 
