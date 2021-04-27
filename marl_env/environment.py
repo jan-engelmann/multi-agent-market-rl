@@ -36,7 +36,6 @@ class MultiAgentEnvironment:
         market,
         info_setting,
         n_environments,
-        worker_pool,
     ):
 
         self.n_sellers = len(sellers)
@@ -52,7 +51,6 @@ class MultiAgentEnvironment:
         self.market = market
         self.info_setting: OfferInformationSetting = info_setting
 
-        self.worker_pool = worker_pool
         # TODO: check if this observation space is correct
         self.observation_space = Box(
             low=-np.inf, high=np.inf, shape=self.info_setting.observation_space.shape
@@ -79,9 +77,11 @@ class MultiAgentEnvironment:
             )
         ]
         res = torch.stack(
-            self.worker_pool.starmap(
-                get_agent_actions,
-                agent_observation_tuples,
+            list(
+                itertools.starmap(
+                    get_agent_actions,
+                    agent_observation_tuples,
+                )
             )
         ).T
         return torch.split(res, [self.n_sellers, self.n_buyers], dim=1)
@@ -150,26 +150,16 @@ if __name__ == "__main__":
     seller_ids = [agent.id for agent in sellers]
     market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
     # info_setting = OfferInformationSetting(n_offers=3)
-    info_setting = BlackBoxSetting()
-    for n_proc in tqdm(n_processes, desc="n_processes"):
-        for it in tqdm(range(n_iterations), desc="n_iterations", leave=False):
-            duration = 0.0
-            start = time.time()
-            with mp.Pool(n_proc) as pool:
-                env = MultiAgentEnvironment(
-                    sellers,
-                    buyers,
-                    market,
-                    info_setting,
-                    n_environments,
-                    pool,
-                )
-                for i in range(n_steps):
-                    env.step()
-            end = time.time()
-            duration += end - start
-        times.append(duration / n_iterations)  # type: ignore
+    info_setting = TimeInformationWrapper(OfferInformationSetting())
 
-    df = pd.DataFrame(dict(n_processes=n_processes, time=times))
-    print(df)
-    print("Finished")
+    env = MultiAgentEnvironment(
+        sellers,
+        buyers,
+        market,
+        info_setting,
+        n_environments,
+    )
+    for i in range(n_steps):
+        env.step()
+
+    print("stop")
