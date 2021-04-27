@@ -113,7 +113,7 @@ class OfferInformationSetting(InformationSetting):
             # Return total_info as tensor with shape (n_agents, n_envs, n_features) where n_features == 2 * n_offers
             return total_info.contiguous().view(n_agents, n_envs, -1)
 
-        # Each history contains a list of tensors of shape (n_agents, n_environments) for sellers and buyers
+        # Each history contains a list of tensors of shape (n_environments, n_agents) for sellers and buyers
         # respectively
         b_actions = market.buyer_history[-1]
         s_actions = market.seller_history[-1]
@@ -152,24 +152,28 @@ class DealInformationSetting(InformationSetting):
     observation_space: Box object
         Each element is a numpy array of shape ``(n_offers,)``. No deals will
         be represented by 0.
+
     """
 
     def __init__(self, n_deals=5):
         self.n_deals = n_deals
         self.observation_space = Box(low=0, high=np.infty, shape=[n_deals])
 
-    def get_states(self, agent_ids, market):
+    def get_states(self, market):
         n = self.n_deals
-        if market.deal_history:
-            # Here we exploit that deal_history contains the same deal twice
-            # in a row, once for the buyer and once for the seller. Since
-            # Python >= 3.6 dicts preserve the order of insertion, we can
-            # rely on this to obtain the distinct deals that happened.
-            deals = list(market.deal_history[-1].values())[0 : 2 * n : 2]
-            deals = np.pad(deals, (0, n - len(deals)))  # Pad it with zeros
-        else:
-            deals = np.zeros(n)
-        return {agent_id: deals for agent_id in agent_ids}
+        n_envs = market.n_environments
+        n_agents = market.n_agents
+        total_info = torch.zeros(n_agents, n_envs, n)
+
+        if not market.deal_history:
+            return total_info
+
+        # Get the best n best deals from the last round.
+        # deal_history is already sorted.
+        total_info = market.deal_history[-1][:, :n].unsqueeze_(0).expand(
+            n_agents, n_envs, n
+        )
+        return total_info
 
 
 class TimeInformationWrapper(InformationSetting):
@@ -188,17 +192,12 @@ class TimeInformationWrapper(InformationSetting):
         This should be the same as the ``max_steps`` parameter in the market
         engine, as it determines the maximum number of time steps there can be.
 
-    TODO: Fix observation_space since we are now returning a tensor with n + 1 features, a tuple of observation spaces
-          is surely wrong...
-
     """
 
     def __init__(self, base_setting, max_steps=30):
         self.base_setting = base_setting
         self.max_steps = max_steps
-        self.observation_space = Tuple(
-            (base_setting.observation_space, Discrete(max_steps))
-        )
+        self.observation_space = Box(low=0, high=np.infty, shape=[base_setting.observation_space.shape[0] + 1])
 
     def get_states(self, market):
         n_envs = market.n_environments
