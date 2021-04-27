@@ -90,7 +90,7 @@ class MultiAgentEnvironment:
         rewards_sellers = deals_sellers - self.s_reservations[None, :]
         rewards_buyers = self.b_reservations[None, :] - deals_buyers
 
-        # Agents who are finished receive a zero reward.
+        # Agents who are finished since the previous round receive a zero reward.
         # Rethink if this is logical...
         rewards_sellers[self.done_sellers] = 0
         rewards_buyers[self.done_buyers] = 0
