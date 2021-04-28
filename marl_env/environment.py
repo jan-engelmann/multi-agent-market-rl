@@ -28,6 +28,9 @@ def get_agent_actions(agent, observation):
 
 
 class MultiAgentEnvironment:
+    """
+    TODO: !!! Rethink which tensors need to be part of autograph and which tensors can be detached !!!
+    """
     def __init__(
         self,
         sellers,
@@ -97,13 +100,11 @@ class MultiAgentEnvironment:
         rewards_buyers = self.b_reservations[None, :] - deals_buyers
 
         # Agents who are finished since the previous round receive a zero reward.
+        # This is done by multiplying elementwise with the inverse of the masking matrix inorder to
+        # not make use of inplace operations (I hope...)
         # TODO: Rethink if this is logical...
-        rewards_sellers = torch.where(
-            self.done_sellers, torch.FloatTensor([0]), rewards_sellers
-        )
-        rewards_buyers = torch.where(
-            self.done_buyers, torch.FloatTensor([0]), rewards_buyers
-        )
+        rewards_sellers = torch.mul(rewards_sellers, ~self.done_sellers)
+        rewards_buyers = torch.mul(rewards_buyers, ~self.done_buyers)
 
         return rewards_sellers, rewards_buyers
 
@@ -125,10 +126,12 @@ class MultiAgentEnvironment:
         # We set the asking price of sellers who are done to max(b_reservations) + 1
         # and the biding price of buyers who are done to zero
         # This results in actions not capable of producing a deal and therefore not interfering with other agents.
-        s_actions = torch.where(
-            self.done_sellers, self.b_reservations.max() + 1.0, s_actions
-        )
-        b_actions = torch.where(self.done_buyers, torch.FloatTensor([0]), b_actions)
+        # We make use of element wise multiplication with masking tensors in order to prevent inplace
+        # operations (we hope...)
+        s_mask_val = self.b_reservations.max() + 1.0
+        b_mask_val = torch.FloatTensor([0])
+        s_actions = torch.mul(s_mask_val, self.done_sellers) + torch.mul(s_actions, ~self.done_sellers)
+        b_actions = torch.mul(b_mask_val, self.done_buyers) + torch.mul(b_actions, ~self.done_buyers)
 
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
         self.newly_finished_sellers = deals_sellers > 0

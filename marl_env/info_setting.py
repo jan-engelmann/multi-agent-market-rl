@@ -98,6 +98,19 @@ class OfferInformationSetting(InformationSetting):
           But double check implementation to be sure...
           !!! market.n_environments not part of market !!!
           Look at observation_space, does it still have the shape (2, n_offers)?
+
+          --> If we look at environments as being batches, it makes sense for an agent to have observations over all
+              environments. You can think of it as the agent playing all environments at the same time.
+              I imagine something like this:
+
+              agent(input_tensor(n_environments, n_features)) --> action_tensor(n_environments, 1)
+
+              So the agent takes action in all environments in one go. In the same way as a Neural Network would do when
+              making use of batch stochastic gradient descent
+
+          --> Different point:
+              market.n_buyers and market.n_sellers need to be integers. Currently MarketMatchHiLo(...) gets initialised
+              with lists of buyer and seller ids. Is this intentional?
     """
 
     def __init__(self, n_offers=5):

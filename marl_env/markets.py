@@ -53,6 +53,10 @@ class BaseMarketEngine:
 
 
 class MarketMatchHiLo(BaseMarketEngine):
+    """
+    TODO: ?? Do we want to overwrite n_buyers and n_sellers with lists of buyer and seller ids ??
+          If we need buyer and seller id lists, we should probably generate n_buyers and n_sellers vie len() operation.
+    """
     def __init__(self, buyer_ids, seller_ids, n_environments, max_steps=30):
         super(MarketMatchHiLo, self).__init__(
             buyer_ids, seller_ids, n_environments, max_steps=30
