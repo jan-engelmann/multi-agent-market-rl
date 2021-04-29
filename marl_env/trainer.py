@@ -5,6 +5,8 @@ import torch
 
 from tqdm import tqdm
 
+from marl_env.loss_setting import SimpleLossSetting
+
 
 class ThomasSimpleTrainer:
     def __init__(
@@ -56,5 +58,41 @@ class ThomasSimpleTrainer:
                         agent, t_step, i
                     ] = (
                         loss.detach().numpy()
-                    )  # we should see this dropiing as we repeat the training loop.
+                    )  # we should see this dropping as we repeat the training loop.
+        return loss_matrix
+
+
+class MeanAbsErrorTrainer:
+    torch.autograd.set_detect_anomaly(True)
+    def __init__(self, env, training_steps=1000):
+        self.env = env
+        self.training_steps = training_steps
+        self.loss = SimpleLossSetting()
+        self.env.reset()
+        self.setup()
+
+    def setup(self):
+        self.optimizers = [
+            torch.optim.Adam(agent.model.parameters()) for agent in self.env.all_agents
+        ]
+
+    def train(self):
+        loss_matrix = np.zeros(
+            (self.env.n_environments, self.env.n_agents, self.training_steps)
+        )
+        for t_step in tqdm(range(self.training_steps)):
+
+            obs, rew, actions = self.env.step()
+            env = self.env
+            s_reward = rew[0]
+            b_reward = rew[1]
+            tot_loss = self.loss.get_losses(env, s_reward, b_reward)
+
+            for agent in range(self.env.n_agents):
+                loss = tot_loss[:, agent]
+                loss = loss.sum()
+                loss.backward(retain_graph=True)
+                self.optimizers[agent].step()  # parameter update
+                loss_matrix[:, agent, t_step] = loss.detach().numpy()
+                print(f"Agent {agent} updated")
         return loss_matrix

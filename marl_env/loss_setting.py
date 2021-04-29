@@ -12,7 +12,7 @@ class LossSetting:
     def __init__(self):
         pass
 
-    def get_losses(self, env):
+    def get_losses(self, env, s_rewards, b_rewards):
         """
         Compute the loss of all agents given the environment object.
 
@@ -21,6 +21,9 @@ class LossSetting:
         env: MultiAgentEnvironment object
             The current environment object.
 
+        s_rewards:
+        b_rewards:
+
         Returns
         -------
         losses: torch.Tensor
@@ -28,8 +31,8 @@ class LossSetting:
         """
         pass
 
-    def get_loss(self, env):
-        return self.get_losses(env)
+    def get_loss(self, env, s_rewards, b_rewards):
+        return self.get_losses(env, s_rewards, b_rewards)
 
 
 class SimpleLossSetting(LossSetting):
@@ -53,7 +56,7 @@ class SimpleLossSetting(LossSetting):
     def __init__(self, epsilon=1e-6):
         self.epsilon = epsilon
 
-    def get_losses(self, env):
+    def get_losses(self, env, s_rewards, b_rewards):
         self.n_sellers = env.n_sellers
         self.n_buyers = env.n_buyers
         self.n_environments = env.n_environments
@@ -78,10 +81,10 @@ class SimpleLossSetting(LossSetting):
         b_max_reward = self.b_reservations - self.s_reservations.min(-1)[0].unsqueeze_(-1) - self.epsilon
         s_max_reward = self.b_reservations.max(-1)[0].unsqueeze_(-1) - self.s_reservations - self.epsilon
 
-        rewards_sellers, rewards_buyers = env.step()[1]
+        # s_rewards, b_rewards = env.step()[1]
 
-        loss_sellers = torch.abs(rewards_sellers - s_max_reward)
-        loss_buyers = torch.abs(rewards_buyers - b_max_reward)
+        loss_sellers = torch.abs(s_rewards - s_max_reward)
+        loss_buyers = torch.abs(b_rewards - b_max_reward)
 
         # Mask the loss for agents who are already finished
         # We set the loss to zero for all agents who are already finished

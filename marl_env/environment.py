@@ -39,6 +39,16 @@ class MultiAgentEnvironment:
         info_setting,
         n_environments,
     ):
+        """
+        TODO: Add some documentation...
+        Parameters
+        ----------
+        sellers
+        buyers
+        market
+        info_setting
+        n_environments
+        """
 
         self.n_sellers = len(sellers)
         self.n_buyers = len(buyers)
@@ -168,7 +178,9 @@ if __name__ == "__main__":
     ]
     buyer_ids = [agent.id for agent in buyers]
     seller_ids = [agent.id for agent in sellers]
-    market = MarketMatchHiLo(buyer_ids, seller_ids, n_environments, max_steps=30)
+    n_buyers = len(buyer_ids)
+    n_sellers = len(seller_ids)
+    market = MarketMatchHiLo(n_buyers, n_sellers, n_environments, max_steps=30)
     # info_setting = OfferInformationSetting(n_offers=3)
     info_setting = TimeInformationWrapper(OfferInformationSetting())
 
