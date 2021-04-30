@@ -71,18 +71,19 @@ class MultiAgentEnvironment:
         self.reset()
 
     def reset(self):
-        self.s_reservations = torch.rand(self.n_sellers)
-        self.b_reservations = torch.rand(self.n_buyers)
+        with torch.no_grad():
+            self.s_reservations = torch.rand(self.n_sellers)
+            self.b_reservations = torch.rand(self.n_buyers)
 
-        # Create a mask keeping track of which agent is already done in the current game.
-        self.done_sellers = torch.full(
-            (self.n_environments, self.n_sellers), False, dtype=torch.bool
-        )
-        self.done_buyers = torch.full(
-            (self.n_environments, self.n_buyers), False, dtype=torch.bool
-        )
-        self.newly_finished_sellers = self.done_sellers.clone()
-        self.newly_finished_buyers = self.done_buyers.clone()
+            # Create a mask keeping track of which agent is already done in the current game.
+            self.done_sellers = torch.full(
+                (self.n_environments, self.n_sellers), False, dtype=torch.bool
+            )
+            self.done_buyers = torch.full(
+                (self.n_environments, self.n_buyers), False, dtype=torch.bool
+            )
+            self.newly_finished_sellers = self.done_sellers.clone()
+            self.newly_finished_buyers = self.done_buyers.clone()
 
         self.past_actions = []
         self.observations = []
@@ -126,8 +127,9 @@ class MultiAgentEnvironment:
         # Update the mask keeping track of which agents are done in the current game.
         # This is done with the mask computed in the previous round. Since only agents who were finished since the
         # previous round should get a zero reward.
-        self.done_sellers += self.newly_finished_sellers
-        self.done_buyers += self.newly_finished_buyers
+        with torch.no_grad():
+            self.done_sellers += self.newly_finished_sellers
+            self.done_buyers += self.newly_finished_buyers
 
         self.store_observations()
         s_actions, b_actions = self.get_actions()
@@ -138,14 +140,17 @@ class MultiAgentEnvironment:
         # This results in actions not capable of producing a deal and therefore not interfering with other agents.
         # We make use of element wise multiplication with masking tensors in order to prevent inplace
         # operations (we hope...)
-        s_mask_val = self.b_reservations.max() + 1.0
-        b_mask_val = torch.FloatTensor([0])
+        with torch.no_grad():
+            s_mask_val = self.b_reservations.max() + 1.0
+            b_mask_val = torch.FloatTensor([0])
         s_actions = torch.mul(s_mask_val, self.done_sellers) + torch.mul(s_actions, ~self.done_sellers)
         b_actions = torch.mul(b_mask_val, self.done_buyers) + torch.mul(b_actions, ~self.done_buyers)
 
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
-        self.newly_finished_sellers = deals_sellers > 0
-        self.newly_finished_buyers = deals_buyers > 0
+
+        with torch.no_grad():
+            self.newly_finished_sellers = deals_sellers > 0
+            self.newly_finished_buyers = deals_buyers > 0
 
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers

@@ -64,7 +64,7 @@ class ThomasSimpleTrainer:
 
 class MeanAbsErrorTrainer:
     torch.autograd.set_detect_anomaly(True)
-    def __init__(self, env, training_steps=1000):
+    def __init__(self, env, training_steps=5):
         self.env = env
         self.training_steps = training_steps
         self.loss = SimpleLossSetting()
@@ -81,16 +81,15 @@ class MeanAbsErrorTrainer:
             (self.env.n_environments, self.env.n_agents, self.training_steps)
         )
         for t_step in tqdm(range(self.training_steps)):
-
             obs, rew, actions = self.env.step()
             tot_loss = self.loss.get_losses(self.env, rew[0], rew[1])
             tot_loss.backward(torch.full_like(tot_loss, 1.0, dtype=torch.float32), retain_graph=True)
             loss_matrix[:, :, t_step] = tot_loss.detach().numpy()
-            print("Current Loss values are: ")
-            print(loss_matrix)
+            print("The gradient of the Loss is: ")
+            print(tot_loss.grad)
+            print("")
 
             for agent in range(self.env.n_agents):
                 self.optimizers[agent].zero_grad()
                 self.optimizers[agent].step()  # parameter update
-                print(f"Agent {agent} updated")
         return loss_matrix

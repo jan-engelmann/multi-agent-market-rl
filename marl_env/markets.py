@@ -77,10 +77,12 @@ class MarketMatchHiLo(BaseMarketEngine):
         )  # if true => no deal, if the bid is lower than the offer no deal happens
 
         s_realized_sorted_deals = s_actions_sorted.clone()
-        s_realized_sorted_deals[no_deal_mask[:, : self.n_sellers]] = 0
+        s_realized_sorted_deals = torch.mul(s_realized_sorted_deals, ~no_deal_mask)
+        # s_realized_sorted_deals[no_deal_mask[:, : self.n_sellers]] = 0
 
         b_realized_sorted_deals = b_actions_sorted.clone()
-        b_realized_sorted_deals[no_deal_mask[:, : self.n_buyers]] = 0
+        b_realized_sorted_deals = torch.mul(b_realized_sorted_deals, ~no_deal_mask)
+        # b_realized_sorted_deals[no_deal_mask[:, : self.n_buyers]] = 0
 
         # calculating deal prices
         sorted_deal_prices = torch.zeros(s_actions.shape[0], self.max_group_size)
