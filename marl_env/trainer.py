@@ -83,16 +83,14 @@ class MeanAbsErrorTrainer:
         for t_step in tqdm(range(self.training_steps)):
 
             obs, rew, actions = self.env.step()
-            env = self.env
-            s_reward = rew[0]
-            b_reward = rew[1]
-            tot_loss = self.loss.get_losses(env, s_reward, b_reward)
+            tot_loss = self.loss.get_losses(self.env, rew[0], rew[1])
+            tot_loss.backward(torch.full_like(tot_loss, 1.0, dtype=torch.float32), retain_graph=True)
+            loss_matrix[:, :, t_step] = tot_loss.detach().numpy()
+            print("Current Loss values are: ")
+            print(loss_matrix)
 
             for agent in range(self.env.n_agents):
-                loss = tot_loss[:, agent]
-                loss = loss.sum()
-                loss.backward(retain_graph=True)
+                self.optimizers[agent].zero_grad()
                 self.optimizers[agent].step()  # parameter update
-                loss_matrix[:, agent, t_step] = loss.detach().numpy()
                 print(f"Agent {agent} updated")
         return loss_matrix
