@@ -72,16 +72,15 @@ class SimpleLossSetting(LossSetting):
         # participating. Because they might change the max reward possible.
         # We make use of element wise multiplication with masking tensors in order to prevent inplace
         # operations (we hope...)
-        self.s_reservations = torch.mul(s_masking_val, self.done_sellers) + \
-                              torch.mul(self.s_reservations, ~self.done_sellers)
-        self.b_reservations = torch.mul(b_masking_val, self.done_sellers) + \
-                              torch.mul(self.b_reservations, ~self.done_buyers)
+        with torch.no_grad():
+            self.s_reservations = torch.mul(s_masking_val, self.done_sellers) + \
+                                  torch.mul(self.s_reservations, ~self.done_sellers)
+            self.b_reservations = torch.mul(b_masking_val, self.done_sellers) + \
+                                  torch.mul(self.b_reservations, ~self.done_buyers)
 
-        # Compute max reward for each agent and expand to each environment
-        b_max_reward = self.b_reservations - self.s_reservations.min(-1)[0].unsqueeze_(-1) - self.epsilon
-        s_max_reward = self.b_reservations.max(-1)[0].unsqueeze_(-1) - self.s_reservations - self.epsilon
-
-        # s_rewards, b_rewards = env.step()[1]
+            # Compute max reward for each agent and expand to each environment
+            b_max_reward = self.b_reservations - self.s_reservations.min(-1)[0].unsqueeze_(-1) - self.epsilon
+            s_max_reward = self.b_reservations.max(-1)[0].unsqueeze_(-1) - self.s_reservations - self.epsilon
 
         loss_sellers = torch.abs(s_rewards - s_max_reward)
         loss_buyers = torch.abs(b_rewards - b_max_reward)
@@ -93,6 +92,7 @@ class SimpleLossSetting(LossSetting):
         loss_sellers = torch.mul(loss_sellers, ~self.done_sellers)
         loss_buyers = torch.mul(loss_buyers, ~self.done_buyers)
 
-        total_loss = torch.cat((loss_sellers, loss_buyers), -1)
+        # Temporarily multiplied loss by 150... Remove before proper use
+        total_loss = torch.cat((loss_sellers, loss_buyers), -1) * 150
 
         return total_loss

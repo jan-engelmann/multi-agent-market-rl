@@ -71,19 +71,18 @@ class MultiAgentEnvironment:
         self.reset()
 
     def reset(self):
-        with torch.no_grad():
-            self.s_reservations = torch.rand(self.n_sellers)
-            self.b_reservations = torch.rand(self.n_buyers)
+        self.s_reservations = torch.rand(self.n_sellers)
+        self.b_reservations = torch.rand(self.n_buyers)
 
-            # Create a mask keeping track of which agent is already done in the current game.
-            self.done_sellers = torch.full(
-                (self.n_environments, self.n_sellers), False, dtype=torch.bool
-            )
-            self.done_buyers = torch.full(
-                (self.n_environments, self.n_buyers), False, dtype=torch.bool
-            )
-            self.newly_finished_sellers = self.done_sellers.clone()
-            self.newly_finished_buyers = self.done_buyers.clone()
+        # Create a mask keeping track of which agent is already done in the current game.
+        self.done_sellers = torch.full(
+            (self.n_environments, self.n_sellers), False, dtype=torch.bool
+        )
+        self.done_buyers = torch.full(
+            (self.n_environments, self.n_buyers), False, dtype=torch.bool
+        )
+        self.newly_finished_sellers = self.done_sellers.clone()
+        self.newly_finished_buyers = self.done_buyers.clone()
 
         self.past_actions = []
         self.observations = []
@@ -127,9 +126,8 @@ class MultiAgentEnvironment:
         # Update the mask keeping track of which agents are done in the current game.
         # This is done with the mask computed in the previous round. Since only agents who were finished since the
         # previous round should get a zero reward.
-        with torch.no_grad():
-            self.done_sellers += self.newly_finished_sellers
-            self.done_buyers += self.newly_finished_buyers
+        self.done_sellers += self.newly_finished_sellers
+        self.done_buyers += self.newly_finished_buyers
 
         self.store_observations()
         s_actions, b_actions = self.get_actions()

@@ -64,16 +64,18 @@ class ThomasSimpleTrainer:
 
 class MeanAbsErrorTrainer:
     torch.autograd.set_detect_anomaly(True)
-    def __init__(self, env, training_steps=5):
+
+    def __init__(self, env, training_steps=5, learning_rate=0.5):
         self.env = env
         self.training_steps = training_steps
+        self.learning_rate = learning_rate
         self.loss = SimpleLossSetting()
         self.env.reset()
         self.setup()
 
     def setup(self):
         self.optimizers = [
-            torch.optim.Adam(agent.model.parameters()) for agent in self.env.all_agents
+            torch.optim.Adam(agent.model.parameters(), lr=self.learning_rate) for agent in self.env.all_agents
         ]
 
     def train(self):
@@ -84,12 +86,23 @@ class MeanAbsErrorTrainer:
             obs, rew, actions = self.env.step()
             tot_loss = self.loss.get_losses(self.env, rew[0], rew[1])
             tot_loss.backward(torch.full_like(tot_loss, 1.0, dtype=torch.float32), retain_graph=True)
-            loss_matrix[:, :, t_step] = tot_loss.detach().numpy()
-            print("The gradient of the Loss is: ")
-            print(tot_loss.grad)
-            print("")
 
             for agent in range(self.env.n_agents):
-                self.optimizers[agent].zero_grad()
+                old_params = {}
+                for name, param in enumerate(self.env.all_agents[agent].model.parameters()):
+                    old_params[name] = param.clone()
+                # self.optimizers[agent].zero_grad()
                 self.optimizers[agent].step()  # parameter update
+                # if list(self.env.all_agents[0].model.parameters())[0].grad.data > 0:
+                #     print("Step: ", t_step, " Agent: ", agent, " after step True")
+                #     print(list(self.env.all_agents[0].model.parameters())[0].grad)
+                # for name, param in enumerate(self.env.all_agents[agent].model.parameters()):
+                #     if not (old_params[name] == param):
+                #         print("Performed parameter update for step:", t_step, "and agent: ", agent)
+                self.optimizers[agent].zero_grad() # Think about best placement of this operation
+                # print("Step: ", t_step, " Agent: ", agent, " after reset")
+                # print(list(self.env.all_agents[0].model.parameters())[0].grad)
+
+            loss_matrix[:, :, t_step] = tot_loss.detach().numpy()
+
         return loss_matrix

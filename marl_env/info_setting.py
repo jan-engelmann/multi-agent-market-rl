@@ -74,7 +74,7 @@ class BlackBoxSetting(InformationSetting):
         # total_info[:n_sellers,:,:] contains all observations for the seller agents
         # total_info[n_sellers:,:,:] contains all observations for the buyer agents
         # total_info is used as input for the NN --> Should bee the leaf of the gradient graph --> Make use of .detach()
-        return total_info.detach()
+        return total_info.clone().detach()
 
 
 class OfferInformationSetting(InformationSetting):
@@ -149,7 +149,7 @@ class OfferInformationSetting(InformationSetting):
 
         # The information each agent gets is the same
         # Return total_info as tensor with shape (n_agents, n_envs, n_features) where n_features == 2 * n_offers
-        total_info = total_info.contiguous().view(n_agents, n_envs, -1).detach()
+        total_info = total_info.contiguous().view(n_agents, n_envs, -1).clone().detach()
 
         return total_info
 
@@ -191,7 +191,7 @@ class DealInformationSetting(InformationSetting):
         # deal_history is already sorted.
         total_info = (
             market.deal_history[-1][:, :n].unsqueeze_(0).expand(n_agents, n_envs, n)
-        ).detach()
+        ).clone().detach()
         return total_info
 
 
@@ -231,7 +231,7 @@ class TimeInformationWrapper(InformationSetting):
         assert normalized_time <= 1  # otherwise time constraint violated
 
         time_info = torch.full((n_agents, n_envs, 1), normalized_time)
-        total_info = torch.cat((base_obs, time_info), -1).detach()
+        total_info = torch.cat((base_obs, time_info), -1).clone().detach()
 
         # Return total_info with one added feature representing the current normalized market time.
         return total_info
