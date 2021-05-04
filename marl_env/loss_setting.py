@@ -75,7 +75,7 @@ class SimpleLossSetting(LossSetting):
         with torch.no_grad():
             self.s_reservations = torch.mul(s_masking_val, self.done_sellers) + \
                                   torch.mul(self.s_reservations, ~self.done_sellers)
-            self.b_reservations = torch.mul(b_masking_val, self.done_sellers) + \
+            self.b_reservations = torch.mul(b_masking_val, self.done_buyers) + \
                                   torch.mul(self.b_reservations, ~self.done_buyers)
 
             # Compute max reward for each agent and expand to each environment

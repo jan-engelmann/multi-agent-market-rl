@@ -55,9 +55,9 @@ class BaseMarketEngine:
 class MarketMatchHiLo(BaseMarketEngine):
     """
     """
-    def __init__(self, n_buyers, n_sellers, n_environments, max_steps=30):
+    def __init__(self, n_sellers, n_buyers, n_environments, max_steps=30):
         super(MarketMatchHiLo, self).__init__(
-            n_buyers, n_sellers, n_environments, max_steps=30
+            n_sellers, n_buyers, n_environments, max_steps=30
         )
 
     def calculate_deals(self, s_actions, b_actions):
@@ -75,13 +75,12 @@ class MarketMatchHiLo(BaseMarketEngine):
         no_deal_mask = (
             bid_offer_diffs <= 0
         )  # if true => no deal, if the bid is lower than the offer no deal happens
-
         s_realized_sorted_deals = s_actions_sorted.clone()
-        s_realized_sorted_deals = torch.mul(s_realized_sorted_deals, ~no_deal_mask)
+        s_realized_sorted_deals = torch.mul(s_realized_sorted_deals, ~no_deal_mask[:, : self.n_sellers])
         # s_realized_sorted_deals[no_deal_mask[:, : self.n_sellers]] = 0
 
         b_realized_sorted_deals = b_actions_sorted.clone()
-        b_realized_sorted_deals = torch.mul(b_realized_sorted_deals, ~no_deal_mask)
+        b_realized_sorted_deals = torch.mul(b_realized_sorted_deals, ~no_deal_mask[:, : self.n_buyers])
         # b_realized_sorted_deals[no_deal_mask[:, : self.n_buyers]] = 0
 
         # calculating deal prices

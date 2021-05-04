@@ -85,7 +85,7 @@ class MeanAbsErrorTrainer:
         for t_step in tqdm(range(self.training_steps)):
             obs, rew, actions = self.env.step()
             tot_loss = self.loss.get_losses(self.env, rew[0], rew[1])
-            tot_loss.backward(torch.full_like(tot_loss, 1.0, dtype=torch.float32), retain_graph=True)
+            tot_loss.backward(torch.full_like(tot_loss, 1.0, dtype=torch.float32))
 
             for agent in range(self.env.n_agents):
                 old_params = {}
