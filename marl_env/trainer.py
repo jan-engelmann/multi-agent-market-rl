@@ -77,6 +77,9 @@ class MeanAbsErrorTrainer:
         self.optimizers = [
             torch.optim.Adam(agent.model.parameters(), lr=self.learning_rate) for agent in self.env.all_agents
         ]
+        # Set all initial gradients to zero. Is this really needed?
+        for optimizer in self.optimizers:
+            optimizer.zero_grad()
 
     def train(self):
         loss_matrix = np.zeros(
@@ -85,13 +88,12 @@ class MeanAbsErrorTrainer:
         for t_step in tqdm(range(self.training_steps)):
             obs, rew, actions = self.env.step()
             tot_loss = self.loss.get_losses(self.env, rew[0], rew[1])
-            tot_loss.backward(torch.full_like(tot_loss, 1.0, dtype=torch.float32))
+            tot_loss.backward(torch.ones_like(tot_loss))
 
             for agent in range(self.env.n_agents):
                 old_params = {}
                 for name, param in enumerate(self.env.all_agents[agent].model.parameters()):
                     old_params[name] = param.clone()
-                # self.optimizers[agent].zero_grad()
                 self.optimizers[agent].step()  # parameter update
                 # if list(self.env.all_agents[0].model.parameters())[0].grad.data > 0:
                 #     print("Step: ", t_step, " Agent: ", agent, " after step True")
@@ -99,7 +101,7 @@ class MeanAbsErrorTrainer:
                 # for name, param in enumerate(self.env.all_agents[agent].model.parameters()):
                 #     if not (old_params[name] == param):
                 #         print("Performed parameter update for step:", t_step, "and agent: ", agent)
-                self.optimizers[agent].zero_grad() # Think about best placement of this operation
+                self.optimizers[agent].zero_grad()
                 # print("Step: ", t_step, " Agent: ", agent, " after reset")
                 # print(list(self.env.all_agents[0].model.parameters())[0].grad)
 

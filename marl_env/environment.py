@@ -35,6 +35,8 @@ class MultiAgentEnvironment:
         self,
         sellers,
         buyers,
+        s_reservations,
+        b_reservations,
         market,
         info_setting,
         n_environments,
@@ -64,10 +66,6 @@ class MultiAgentEnvironment:
         self.market = market
         self.info_setting: OfferInformationSetting = info_setting
 
-        # TODO: check if this observation space is correct
-        self.observation_space = Box(
-            low=-np.inf, high=np.inf, shape=self.info_setting.observation_space.shape
-        )
         self.reset()
 
     def reset(self):
