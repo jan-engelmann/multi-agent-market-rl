@@ -57,7 +57,7 @@ class MarketMatchHiLo(BaseMarketEngine):
     """
     def __init__(self, n_sellers, n_buyers, n_environments, max_steps=30):
         super(MarketMatchHiLo, self).__init__(
-            n_sellers, n_buyers, n_environments, max_steps=30
+            n_sellers, n_buyers, n_environments, max_steps=max_steps
         )
 
     def calculate_deals(self, s_actions, b_actions):
