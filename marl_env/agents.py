@@ -134,7 +134,7 @@ class DQNAgent(AgentSetting):
             q_values = self.qNetwork(observation).squeeze(1)
             idx = torch.argmax(q_values)
         action_price = self.action_space[idx]
-        return action_price
+        return torch.Tensor([action_price])
 
     def random_action(self, observation=None, epsilon=None):
         """
