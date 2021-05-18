@@ -7,14 +7,9 @@ if __name__ == "__main__":
 import torch
 import itertools
 
-from marl_env.markets import MarketMatchHiLo
-from marl_env.agents import DummyAgent
 from marl_env.info_setting import (
-    BlackBoxSetting,
     OfferInformationSetting,
-    TimeInformationWrapper,
 )
-import numpy as np
 
 
 def get_agent_actions(agent, observation, epsilon, random_action):
@@ -45,9 +40,6 @@ def get_agent_actions(agent, observation, epsilon, random_action):
 
 
 class MultiAgentEnvironment:
-    """
-    TODO: !!! Rethink which tensors need to be part of autograph and which tensors can be detached !!!
-    """
     def __init__(
         self,
         sellers,
@@ -89,10 +81,13 @@ class MultiAgentEnvironment:
         self.exploration_setting = exploration_setting
 
         self.random_action = False
+        self.done = False
 
         self.reset()
 
     def reset(self):
+        self.done = False
+
         # Create a mask keeping track of which agent is already done in the current game.
         self.done_sellers = torch.full(
             (self.n_environments, self.n_sellers), False, dtype=torch.bool
@@ -129,9 +124,6 @@ class MultiAgentEnvironment:
         rewards_buyers = self.b_reservations[None, :] - deals_buyers
 
         # Agents who are finished since the previous round receive a zero reward.
-        # This is done by multiplying elementwise with the inverse of the masking matrix inorder to
-        # not make use of inplace operations (I hope...)
-        # TODO: Rethink if this is logical...
         rewards_sellers = torch.mul(rewards_sellers, ~self.done_sellers)
         rewards_buyers = torch.mul(rewards_buyers, ~self.done_buyers)
 
@@ -142,12 +134,34 @@ class MultiAgentEnvironment:
         self.observations.append(self.info_setting.get_states(self.market))
 
     def step(self, random_action=False):
+        """
+
+        Parameters
+        ----------
+        random_action
+
+        Returns
+        -------
+        current_observations: torch.Tensor
+            All agent observations at the current time step t. The zero dimension has size self.n_agents
+            current_observations[:n_sellers,:,:] contains all observations for the seller agents
+            current_observations[n_sellers:,:,:] contains all observations for the buyer agents
+        current_actions: torch.Tensor
+            All agent actions at the current time step t. The last dimension has size self.n_agents
+            current_actions[:, :n_sellers] contains all actions for the seller agents
+            current_actions[: , n_sellers:] contains all actions for the buyer agents
+        current_rewards: torch.Tensor
+            All agent rewards at the current time step t. The last dimension has size self.n_agents
+            current_rewards[:, :n_sellers] contains all rewards for the seller agents
+            current_rewards[: , n_sellers:] contains all rewards for the buyer agents
+        next_observation: torch.Tensor
+            All agent observations at the next time step t + 1. The zero dimension has size self.n_agents
+            next_observation[:n_sellers,:,:] contains all observations for the seller agents
+            next_observation[n_sellers:,:,:] contains all observations for the buyer agents
+        self.done: bool
+            True if all agents are done trading or if the the game has come to an end
+        """
         self.random_action = random_action
-        # Update the mask keeping track of which agents are done in the current game.
-        # This is done with the mask computed in the previous round. Since only agents who were finished since the
-        # previous round should get a zero reward.
-        self.done_sellers += self.newly_finished_sellers
-        self.done_buyers += self.newly_finished_buyers
 
         self.store_observations()
         s_actions, b_actions = self.get_actions()
@@ -177,48 +191,26 @@ class MultiAgentEnvironment:
         # Update the exploration value epsilon.
         self.exploration_setting.update()
 
-        # TODO: break if no more deals can be made!
+        # Update the mask keeping track of which agents are done in the current game.
+        # This is done with the mask computed in the previous round. Since only agents who were finished since the
+        # previous round should get a zero reward.
+        self.done_sellers += self.newly_finished_sellers
+        self.done_buyers += self.newly_finished_buyers
+
+        if torch.all(self.done_sellers) or torch.all(self.done_buyers):
+            self.done = True
+        elif self.market.time == self.market.max_steps:
+            self.done = True
+
+        current_observations = self.observations[-1]
+        current_actions = torch.stack([s_actions, b_actions], dim=1)
+        current_rewards = torch.stack([rewards_sellers, rewards_buyers], dim=1)
+        next_observation = self.info_setting.get_states(self.market)
 
         return (
-            self.observations[-1],
-            (rewards_sellers, rewards_buyers),
-            (s_actions, b_actions),
+            current_observations,
+            current_actions,
+            current_rewards,
+            next_observation,
+            self.done
         )
-
-
-if __name__ == "__main__":
-    n_sellers = 5
-    n_buyers = 5
-    n_environments = 2
-    n_processes = [1]  # [1, 2, 4, 6, 8]
-    times = []
-    n_iterations = 1
-    n_steps = 5
-
-    sellers = [
-        DummyAgent(idx, num)
-        for idx, num in enumerate(torch.rand(n_sellers, n_environments))
-    ]
-    buyers = [
-        DummyAgent(idx, num)
-        for idx, num in enumerate(torch.rand(n_buyers, n_environments))
-    ]
-    buyer_ids = [agent.id for agent in buyers]
-    seller_ids = [agent.id for agent in sellers]
-    n_buyers = len(buyer_ids)
-    n_sellers = len(seller_ids)
-    market = MarketMatchHiLo(n_buyers, n_sellers, n_environments, max_steps=30)
-    # info_setting = OfferInformationSetting(n_offers=3)
-    info_setting = TimeInformationWrapper(OfferInformationSetting())
-
-    env = MultiAgentEnvironment(
-        sellers,
-        buyers,
-        market,
-        info_setting,
-        n_environments,
-    )
-    for i in range(n_steps):
-        env.step()
-
-    print("stop")
