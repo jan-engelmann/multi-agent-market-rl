@@ -2,48 +2,22 @@ import torch
 import numpy as np
 
 
-class DummyAgent:
-    def __init__(self, agent_id, number):
-        self.number = number
-        self.id = agent_id
+class AgentSetting:
+    """
+    Abstract agent class
 
-    def get_action(self, observation: torch.Tensor):
-        # time.sleep(0.0005)
-        return self.number * observation.mean()  # dummy calculation
+    """
+    def __init__(self, role, reservation, in_features, action_boundary, q_lr=0.001, target_lr=0.001) -> None:
+        pass
 
+    def get_action(self, observation, epsilon=0.05):
+        raise NotImplementedError
 
-class DummyConstantAgent:
-    def __init__(self, agent_id, number):
-        self.number = number
-        self.id = agent_id
-
-    def get_action(self, observation: torch.Tensor):
-        return self.number
+    def random_action(self, observation=None, epsilon=None):
+        raise NotImplementedError
 
 
-class TimeAgent:
-    def __init__(self, agent_id, role, reservation_price) -> None:
-        self.agent_id = agent_id
-        self.role = role
-        self.reservation_price = reservation_price
-
-    def get_action(self, observation):
-        sign = 1.0 if self.role == "seller" else -1.0
-        return (
-            self.reservation_price
-            + sign * (1 - observation[:, :, -1].mean()) * self.reservation_price
-        )
-
-
-class LinearAgent:
-    def __init__(self, n_features) -> None:
-        self.model = torch.nn.Linear(in_features=n_features, out_features=1)
-
-    def get_action(self, observation):
-        return self.model(observation).squeeze(1)
-
-
-class DQNAgent:
+class DQNAgent(AgentSetting):
     def __init__(self, role, reservation, in_features, action_boundary, q_lr=0.001, target_lr=0.001) -> None:
         """
         Agents are implemented in such a manner, that asking and bidding prices are given as integer values. Therefore
@@ -81,8 +55,8 @@ class DQNAgent:
         #     Where max_b_reservation denotes the largest reservation price of all sellers. Therefore this action will
         #     result in 'no action' since the asking price of a seller must be smaller then the reservation price of a
         #     buyer.
-        #     The lowest possible action is given by the reservation price + 1 of a seller guaranteeing a minimal profit
-        #     of 1 in case a deal is reached.
+        #     The lowest possible action is given by the reservation price of a seller guaranteeing a minimal profit
+        #     of 0.5 in case a deal is reached.
         if role == "buyer":
             self.action_space = np.arange(action_boundary, reservation + 1)
         else:
@@ -128,9 +102,18 @@ class DQNAgent:
     def reset_target_network(self):
         self.targetNetwork.load_state_dict(self.qNetwork.state_dict())
 
+        if self.target_opt:
+            state_dict = self.target_opt.state_dict()
+            self.target_opt = torch.optim.Adam(self.targetNetwork.parameters(), lr=0.001)
+            self.target_opt.load_state_dict(state_dict)
+            self.target_opt.zero_grad()
+
     def set_optimizers(self, q_lr, target_lr):
         self.q_opt = torch.optim.Adam(self.qNetwork.parameters(), lr=q_lr)
         self.target_opt = torch.optim.Adam(self.targetNetwork.parameters(), lr=target_lr)
+
+        self.q_opt.zero_grad()
+        self.target_opt.zero_grad()
 
     def get_action(self, observation, epsilon=0.05):
         """
@@ -153,4 +136,25 @@ class DQNAgent:
         action_price = self.action_space[idx]
         return action_price
 
+    def random_action(self, observation=None, epsilon=None):
+        """
+        A uniform random policy intended to populate the replay memory before learning starts
 
+        Parameters
+        ----------
+        observation: Dummy parameter copying get_action()
+        epsilon: Dummy parameter copying get_action()
+
+        Returns
+        -------
+        action_price: int
+            Uniformly sampled action price.
+        """
+        idx = torch.randint(len(self.action_space), (1,))
+        action_price = self.action_space[idx]
+        return torch.Tensor([action_price])
+
+    def get_target(self, observation):
+        q_values = self.targetNetwork(observation).squeeze(1)
+        max_q, _ = torch.max(q_values)
+        return torch.Tensor([max_q])
