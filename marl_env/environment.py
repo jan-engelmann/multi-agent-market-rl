@@ -4,13 +4,8 @@ if __name__ == "__main__":
 
     sys.path.insert(0, os.path.abspath("."))
 
-import gym
 import torch
-import torch.multiprocessing as mp
-import time
 import itertools
-import pandas as pd
-from tqdm import tqdm
 
 from marl_env.markets import MarketMatchHiLo
 from marl_env.agents import DummyAgent
@@ -19,12 +14,34 @@ from marl_env.info_setting import (
     OfferInformationSetting,
     TimeInformationWrapper,
 )
-from gym.spaces import Box
 import numpy as np
 
 
-def get_agent_actions(agent, observation):
-    return agent.get_action(observation)
+def get_agent_actions(agent, observation, epsilon, random_action):
+    """
+
+    Parameters
+    ----------
+    agent: Abstract agent class
+    observation: torch.Tensor
+    epsilon: float
+        The probability of returning a random action in epsilon-greedy exploration
+    random_action: bool
+        If true action is drawn from a uniform random policy or from a specifically implemented random policy called
+        'random_action'
+
+    Returns
+    -------
+    action: torch.Tensor
+    """
+    if not random_action:
+        action = agent.get_action(observation, epsilon)
+    else:
+        try:
+            action = agent.random_action(observation, epsilon)
+        except NotImplementedError:
+            action = agent.get_action(observation, 1.0)
+    return action
 
 
 class MultiAgentEnvironment:
@@ -39,6 +56,7 @@ class MultiAgentEnvironment:
         b_reservations,
         market,
         info_setting,
+        exploration_setting,
         n_environments,
     ):
         """
@@ -59,19 +77,22 @@ class MultiAgentEnvironment:
         self.max_group_size = max(self.n_buyers, self.n_sellers)
         self.n_environments = n_environments  # batch_size
 
+        self.s_reservations = s_reservations
+        self.b_reservations = b_reservations
+
         self.sellers = sellers
         self.buyers = buyers
         self.all_agents = sellers + buyers
 
         self.market = market
         self.info_setting: OfferInformationSetting = info_setting
+        self.exploration_setting = exploration_setting
+
+        self.random_action = False
 
         self.reset()
 
     def reset(self):
-        self.s_reservations = torch.rand(self.n_sellers)
-        self.b_reservations = torch.rand(self.n_buyers)
-
         # Create a mask keeping track of which agent is already done in the current game.
         self.done_sellers = torch.full(
             (self.n_environments, self.n_sellers), False, dtype=torch.bool
@@ -88,7 +109,7 @@ class MultiAgentEnvironment:
     def get_actions(self):
         # TODO: improve distributed calculation
         agent_observation_tuples = [
-            (agent, obs)
+            (agent, obs, self.exploration_setting.epsilon, self.random_action)
             for agent, obs in zip(
                 itertools.chain(self.sellers, self.buyers), self.observations[-1]
             )
@@ -120,7 +141,8 @@ class MultiAgentEnvironment:
         # TODO: actually implement valid observations
         self.observations.append(self.info_setting.get_states(self.market))
 
-    def step(self):
+    def step(self, random_action=False):
+        self.random_action = random_action
         # Update the mask keeping track of which agents are done in the current game.
         # This is done with the mask computed in the previous round. Since only agents who were finished since the
         # previous round should get a zero reward.
@@ -151,6 +173,10 @@ class MultiAgentEnvironment:
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
+
+        # Update the exploration value epsilon.
+        self.exploration_setting.update()
+
         # TODO: break if no more deals can be made!
 
         return (
