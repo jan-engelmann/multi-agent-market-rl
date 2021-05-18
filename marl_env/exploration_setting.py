@@ -35,3 +35,6 @@ class LinearExplorationDecline(ExplorationSetting):
         if self.current_step < self.tot_steps - 1:
             self.current_step += 1
             self.epsilon = self.all_epsilon_values[self.current_step]
+
+    def reset(self):
+        self.current_step = 0
