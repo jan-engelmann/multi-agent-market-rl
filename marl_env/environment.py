@@ -87,6 +87,7 @@ class MultiAgentEnvironment:
 
     def reset(self):
         self.done = False
+        self.market.reset()
 
         # Create a mask keeping track of which agent is already done in the current game.
         self.done_sellers = torch.full(
@@ -121,6 +122,7 @@ class MultiAgentEnvironment:
 
     def calculate_rewards(self, deals_sellers, deals_buyers):
         rewards_sellers = deals_sellers - self.s_reservations[None, :]
+
         rewards_buyers = self.b_reservations[None, :] - deals_buyers
 
         # Agents who are finished since the previous round receive a zero reward.
@@ -167,14 +169,14 @@ class MultiAgentEnvironment:
         s_actions, b_actions = self.get_actions()
 
         # Mask seller and buyer actions for agents which are already done
-        # We set the asking price of sellers who are done to max(b_reservations) + 1
-        # and the biding price of buyers who are done to zero
+        # We set the asking price of sellers who are done to max(b_reservations)
+        # and the biding price of buyers who are done to min(s_reservations)
         # This results in actions not capable of producing a deal and therefore not interfering with other agents.
         # We make use of element wise multiplication with masking tensors in order to prevent inplace
         # operations (we hope...)
         with torch.no_grad():
-            s_mask_val = self.b_reservations.max() + 1.0
-            b_mask_val = torch.FloatTensor([0])
+            s_mask_val = self.b_reservations.max()
+            b_mask_val = self.s_reservations.min()
         s_actions = torch.mul(s_mask_val, self.done_sellers) + torch.mul(s_actions, ~self.done_sellers)
         b_actions = torch.mul(b_mask_val, self.done_buyers) + torch.mul(b_actions, ~self.done_buyers)
 
@@ -203,8 +205,9 @@ class MultiAgentEnvironment:
             self.done = True
 
         current_observations = self.observations[-1]
-        current_actions = torch.stack([s_actions, b_actions], dim=1)
-        current_rewards = torch.stack([rewards_sellers, rewards_buyers], dim=1)
+        current_actions = torch.cat([s_actions, b_actions], dim=-1)
+        current_rewards = torch.cat([rewards_sellers, rewards_buyers], dim=-1)
+
         next_observation = self.info_setting.get_states(self.market)
 
         return (
