@@ -11,7 +11,11 @@ class BaseMarketEngine:
         self.max_group_size = max(n_buyers, n_sellers)
         self.max_n_deals = min(n_buyers, n_sellers)
         self.n_environments = n_environments
-        self.reset()
+
+        self.time = 0
+        self.buyer_history = list()
+        self.seller_history = list()
+        self.deal_history = list()
 
     def reset(self):
         """Reset the market to its initial unmatched state."""
