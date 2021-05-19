@@ -3,7 +3,8 @@ import numpy as np
 
 import torch
 
-from tianshou.data import Batch, ReplayBuffer
+from tianshou.data import Batch
+from marl_env.replay_buffer import ReplayBuffer
 from tqdm import tqdm
 
 from marl_env.loss_setting import SimpleLossSetting
@@ -90,7 +91,55 @@ class DeepQTrainer:
             buffer.add(history_batch)
         return buffer
 
+    @staticmethod
+    def get_agent_Q_target(agent, observation):
+        target = agent.get_target(observation)
+        return target
+
+    def generate_Q_targets(self, obs_next, reward, end_of_eps, discount=0.99):
+        """
+
+        Parameters
+        ----------
+        obs_next: torch.Tensor
+            Tensor containing all observations for sampled time steps t_j + 1
+        reward: torch.Tensor
+            Tensor containing all rewards for the sampled time steps t_j
+        end_of_eps: ndarray
+            Bool array indicating if episode was finished at sampled time step t_j
+        discount: float
+            Discount factor gamma used in the Q-learning update.
+
+        Returns
+        -------
+        targets: torch.Tensor
+            Tensor containing all targets y_j used to perform a gradient descent step on (y_j - Q(s_j, a_j; theta))**2
+            Tensor will have shape (batch_size, n_agents)
+            targets[:, :n_sellers] contains all targets for the seller agents
+            targets[:, n_sellers:] contains all targets for the buyer agents
+        """
+        agent_obs_next_tuples = [
+            (agent, obs_batch.transpose(0, 1))
+            for agent, obs_batch in zip(
+                self.env.all_agents, obs_next.squeeze().transpose(0, 1).unsqueeze(1)
+            )
+        ]
+        targets = torch.stack(
+            list(
+                itertools.starmap(
+                    DeepQTrainer.get_agent_Q_target,
+                    agent_obs_next_tuples
+                )
+            ),
+            dim=1
+        ).squeeze()
+        targets = torch.mul(targets, discount)
+        targets = torch.mul(targets, torch.Tensor(~end_of_eps).unsqueeze(0).transpose(0, 1))
+        targets = torch.add(targets, reward.squeeze())
+        return targets
+
     def train(self, n_episodes, batch_size):
+        # !!! Still being worked on !!!
         for eps in range(n_episodes):
             self.env.reset()
             while not self.env.done:
@@ -100,10 +149,7 @@ class DeepQTrainer:
 
                 # Sample a random minibatch of transitions from the replay buffer
                 batch_data, indice = self.buffer.sample(batch_size=batch_size)
+
+                self.generate_Q_targets(batch_data['obs_next'], batch_data['rew'], batch_data['done'])
                 break
-
-
-
-
-
 
