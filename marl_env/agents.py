@@ -155,6 +155,6 @@ class DQNAgent(AgentSetting):
         return torch.Tensor([action_price])
 
     def get_target(self, observation):
-        q_values = self.targetNetwork(observation).squeeze(1)
-        max_q, _ = torch.max(q_values)
-        return torch.Tensor([max_q])
+        q_values = self.targetNetwork(observation)
+        max_q, _ = torch.max(q_values, dim=1)
+        return max_q.unsqueeze(0).transpose(0, 1)
