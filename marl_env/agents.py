@@ -18,7 +18,7 @@ class AgentSetting:
 
 
 class DQNAgent(AgentSetting):
-    def __init__(self, role, reservation, in_features, action_boundary, q_lr=0.001, target_lr=0.001) -> None:
+    def __init__(self, role, reservation, in_features, action_boundary, q_lr=0.001) -> None:
         """
         Agents are implemented in such a manner, that asking and bidding prices are given as integer values. Therefore
         the unit of the price will be equal to the smallest possible unit of currency e.g. for CHF 1 == 0.05 CHF
@@ -38,8 +38,6 @@ class DQNAgent(AgentSetting):
             In case the agent is a buyer, action_boundary should equal the smallest reservation price of all sellers.
         q_lr: float, optional (default=0.001)
             Learning rate provided to the Q-Network optimizer
-        target_lr: float, optional (default=0.001)
-            Learning rate provided to the Target-Network optimizer
         """
         assert role in ["buyer", "seller"], "role should be 'buyer' or 'seller'"
         assert reservation > 0, "reservation price needs to be larger then zero"
@@ -66,7 +64,6 @@ class DQNAgent(AgentSetting):
         self.q_opt = None
 
         self.targetNetwork = None
-        self.target_opt = None
 
         # Number of out_features is equal to the number of possible actions. Therefore the number of out_features is
         # given by the length of the action_space.
@@ -75,7 +72,7 @@ class DQNAgent(AgentSetting):
         self.set_target_network(in_features, out_features)
         self.reset_target_network()
 
-        self.set_optimizers(q_lr, target_lr)
+        self.set_optimizers(q_lr)
 
     def set_q_network(self, in_features, out_features):
         # in_features is determined by the info_setting --> How many features does the agent see.
@@ -102,18 +99,35 @@ class DQNAgent(AgentSetting):
     def reset_target_network(self):
         self.targetNetwork.load_state_dict(self.qNetwork.state_dict())
 
-        if self.target_opt:
-            state_dict = self.target_opt.state_dict()
-            self.target_opt = torch.optim.Adam(self.targetNetwork.parameters(), lr=0.001)
-            self.target_opt.load_state_dict(state_dict)
-            self.target_opt.zero_grad()
-
-    def set_optimizers(self, q_lr, target_lr):
+    def set_optimizers(self, q_lr):
         self.q_opt = torch.optim.Adam(self.qNetwork.parameters(), lr=q_lr)
-        self.target_opt = torch.optim.Adam(self.targetNetwork.parameters(), lr=target_lr)
-
         self.q_opt.zero_grad()
-        self.target_opt.zero_grad()
+
+    def get_q_value(self, observation, actions=None):
+        """
+
+        Parameters
+        ----------
+        observation: torch.Tensor
+            Agent observations. Should have shape (batch_size, observation_size)
+        actions: torch.Tensor, optional (default = False)
+            Will provide the Q values corresponding to the provided actions.
+            actions should have shape (batch_size, 1)
+            If no actions are provided, the Q value will correspond to the maximal value
+        Returns
+        -------
+        max_q: torch.Tensor
+            Tensor containing all Q values. Has shape (batch_size, 1)
+        """
+        q_values = self.qNetwork(observation)
+        if torch.is_tensor(actions):
+            indices = torch.stack(
+                [torch.tensor(self.action_space) == act for act in actions]
+            )
+            max_q = q_values[indices]
+        else:
+            max_q, _ = torch.max(q_values, dim=1)
+        return max_q
 
     def get_action(self, observation, epsilon=0.05):
         """
