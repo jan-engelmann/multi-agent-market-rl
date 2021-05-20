@@ -48,8 +48,12 @@ class SimpleLossSetting(LossSetting):
     def get_losses(self, env, s_rewards, b_rewards):
         self.n_sellers = env.n_sellers
         self.n_buyers = env.n_buyers
-        self.s_reservations = env.s_reservations.clone().unsqueeze_(0).expand(self.n_sellers)
-        self.b_reservations = env.b_reservations.clone().unsqueeze_(0).expand(self.n_buyers)
+        self.s_reservations = (
+            env.s_reservations.clone().unsqueeze_(0).expand(self.n_sellers)
+        )
+        self.b_reservations = (
+            env.b_reservations.clone().unsqueeze_(0).expand(self.n_buyers)
+        )
         self.done_sellers = env.done_sellers
         self.done_buyers = env.done_buyers
 
@@ -61,18 +65,24 @@ class SimpleLossSetting(LossSetting):
         # We make use of element wise multiplication with masking tensors in order to prevent inplace
         # operations (we hope...)
         with torch.no_grad():
-            self.s_reservations = torch.mul(s_masking_val, self.done_sellers) + \
-                                  torch.mul(self.s_reservations, ~self.done_sellers)
-            self.b_reservations = torch.mul(b_masking_val, self.done_buyers) + \
-                                  torch.mul(self.b_reservations, ~self.done_buyers)
+            self.s_reservations = torch.mul(
+                s_masking_val, self.done_sellers
+            ) + torch.mul(self.s_reservations, ~self.done_sellers)
+            self.b_reservations = torch.mul(
+                b_masking_val, self.done_buyers
+            ) + torch.mul(self.b_reservations, ~self.done_buyers)
 
             # Compute max reward for each agent and expand to each environment
             # Max reward for a buyer is achieved by paying 1 + s_res_min, where s_res_min is the minimal fix costs over
             # all sellers
             # Max reward for a seller is achieved by receiving the highest possible price --> b_res_max, where b_res_max
             # is the largest reservation (budget) over all buyers.
-            b_max_reward = self.b_reservations - self.s_reservations.min(-1)[0].unsqueeze_(-1) - 1
-            s_max_reward = self.b_reservations.max(-1)[0].unsqueeze_(-1) - self.s_reservations
+            b_max_reward = (
+                self.b_reservations - self.s_reservations.min(-1)[0].unsqueeze_(-1) - 1
+            )
+            s_max_reward = (
+                self.b_reservations.max(-1)[0].unsqueeze_(-1) - self.s_reservations
+            )
 
         loss_sellers = torch.abs(s_rewards - s_max_reward)
         loss_buyers = torch.abs(b_rewards - b_max_reward)

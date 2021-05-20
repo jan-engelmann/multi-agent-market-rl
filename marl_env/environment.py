@@ -5,9 +5,11 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.abspath("."))
 
 import torch
+import inspect
 import itertools
 
 import marl_env.markets as markets
+import marl_env.info_setting as inf_setting
 import marl_env.reward_setting as rew_setting
 import marl_env.exploration_setting as expo_setting
 
@@ -75,13 +77,53 @@ class MultiAgentEnvironment:
         self.buyers = buyers
         self.all_agents = sellers + buyers
 
-        self.info_setting = info_setting
-        self.exploration_setting = getattr(expo_setting, exploration_setting)(**kwargs)
-        self.market = getattr(markets, market)(len(sellers), len(buyers), **kwargs)
-        self.reward_setting = getattr(rew_setting, reward_setting)(self, **kwargs)
+        if isinstance(market, str):
+            self.market = getattr(markets, market)(
+                len(sellers), len(buyers), **kwargs.pop("market_settings", {})
+            )
+        else:
+            assert inspect.isclass(
+                type(market)
+            ), "Provide market class object or string name of market class object"
+            self.market = market
+
+        if isinstance(reward_setting, str):
+            self.reward_setting = getattr(rew_setting, reward_setting)(
+                self, **kwargs.pop("reward_setting", {})
+            )
+        else:
+            assert inspect.isclass(type(reward_setting)), (
+                "Provide reward class object or string " "name of reward class object"
+            )
+            self.reward_setting = reward_setting
+
+        if isinstance(exploration_setting, str):
+            self.exploration_setting = getattr(expo_setting, exploration_setting)(
+                **kwargs.pop("exploration_setting", {})
+            )
+        else:
+            assert inspect.isclass(type(exploration_setting)), (
+                "Provide exploration class object or string name "
+                "of exploration class object"
+            )
+            self.exploration_setting = exploration_setting
+
+        if isinstance(info_setting, str):
+            self.info_setting = getattr(inf_setting, info_setting)(
+                self.market, **kwargs.pop("info_setting", {})
+            )
+        else:
+            assert inspect.isclass(type(info_setting)), (
+                "Provide information class object or string name of "
+                "information class object"
+            )
+            self.info_setting = info_setting
 
         self.random_action = False
         self.done = False
+
+        self.past_actions = list()
+        self.observations = list()
 
         self.reset()
 
@@ -90,17 +132,13 @@ class MultiAgentEnvironment:
         self.market.reset()
 
         # Create a mask keeping track of which agent is already done in the current game.
-        self.done_sellers = torch.full(
-            (self.n_sellers,), False, dtype=torch.bool
-        )
-        self.done_buyers = torch.full(
-            (self.n_buyers,), False, dtype=torch.bool
-        )
+        self.done_sellers = torch.full((self.n_sellers,), False, dtype=torch.bool)
+        self.done_buyers = torch.full((self.n_buyers,), False, dtype=torch.bool)
         self.newly_finished_sellers = self.done_sellers.clone()
         self.newly_finished_buyers = self.done_buyers.clone()
 
-        self.past_actions = []
-        self.observations = []
+        self.past_actions.clear()
+        self.observations.clear()
 
     def get_actions(self):
         agent_observation_tuples = [
@@ -126,7 +164,7 @@ class MultiAgentEnvironment:
         return rewards_sellers, rewards_buyers
 
     def store_observations(self):
-        self.observations.append(self.info_setting.get_states(self.market))
+        self.observations.append(self.info_setting.get_states())
 
     def step(self, random_action=False):
         """
@@ -171,8 +209,12 @@ class MultiAgentEnvironment:
         with torch.no_grad():
             s_mask_val = self.b_reservations.max()
             b_mask_val = self.s_reservations.min()
-        s_actions = torch.mul(s_mask_val, self.done_sellers) + torch.mul(s_actions, ~self.done_sellers)
-        b_actions = torch.mul(b_mask_val, self.done_buyers) + torch.mul(b_actions, ~self.done_buyers)
+        s_actions = torch.mul(s_mask_val, self.done_sellers) + torch.mul(
+            s_actions, ~self.done_sellers
+        )
+        b_actions = torch.mul(b_mask_val, self.done_buyers) + torch.mul(
+            b_actions, ~self.done_buyers
+        )
 
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
         print("s_deal ", deals_sellers)
@@ -207,12 +249,12 @@ class MultiAgentEnvironment:
         current_actions = torch.cat([s_actions, b_actions], dim=-1)
         current_rewards = torch.cat([rewards_sellers, rewards_buyers], dim=-1)
 
-        next_observation = self.info_setting.get_states(self.market)
+        next_observation = self.info_setting.get_states()
 
         return (
             current_observations,
             current_actions,
             current_rewards,
             next_observation,
-            self.done
+            self.done,
         )

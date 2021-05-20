@@ -7,7 +7,10 @@ class AgentSetting:
     Abstract agent class
 
     """
-    def __init__(self, role, reservation, in_features, action_boundary, q_lr=0.001) -> None:
+
+    def __init__(
+        self, role, reservation, in_features, action_boundary, q_lr=0.001
+    ) -> None:
         pass
 
     def get_action(self, observation, epsilon=0.05):
@@ -18,7 +21,9 @@ class AgentSetting:
 
 
 class DQNAgent(AgentSetting):
-    def __init__(self, role, reservation, in_features, action_boundary, q_lr=0.001) -> None:
+    def __init__(
+        self, role, reservation, in_features, action_boundary, q_lr=0.001
+    ) -> None:
         """
         Agents are implemented in such a manner, that asking and bidding prices are given as integer values. Therefore
         the unit of the price will be equal to the smallest possible unit of currency e.g. for CHF 1 == 0.05 CHF
@@ -79,7 +84,7 @@ class DQNAgent(AgentSetting):
             torch.nn.ReLU(),
             torch.nn.Linear(64, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(64, out_features)
+            torch.nn.Linear(64, out_features),
         )
 
     def set_target_network(self, in_features, out_features):
@@ -90,7 +95,7 @@ class DQNAgent(AgentSetting):
             torch.nn.ReLU(),
             torch.nn.Linear(64, 64),
             torch.nn.ReLU(),
-            torch.nn.Linear(64, out_features)
+            torch.nn.Linear(64, out_features),
         )
 
     def reset_target_network(self):

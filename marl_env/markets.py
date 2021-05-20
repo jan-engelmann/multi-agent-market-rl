@@ -10,7 +10,7 @@ class BaseMarketEngine:
         self.max_group_size = max(n_buyers, n_sellers)
         self.max_n_deals = min(n_buyers, n_sellers)
 
-        self.max_steps = kwargs.pop('max_steps', 30)
+        self.max_steps = kwargs.pop("max_steps", 30)
 
         self.time = 0
         self.buyer_history = list()
@@ -57,12 +57,10 @@ class BaseMarketEngine:
 
 
 class MarketMatchHiLo(BaseMarketEngine):
-    """
-    """
+    """ """
+
     def __init__(self, n_sellers, n_buyers, **kwargs):
-        super(MarketMatchHiLo, self).__init__(
-            n_sellers, n_buyers, **kwargs
-        )
+        super(MarketMatchHiLo, self).__init__(n_sellers, n_buyers, **kwargs)
 
     def calculate_deals(self, s_actions, b_actions):
         # sort actions of sellers and buyers
@@ -73,17 +71,20 @@ class MarketMatchHiLo(BaseMarketEngine):
         # get mask for all deals that happen
         bid_offer_diffs = torch.zeros(self.max_group_size)
         bid_offer_diffs[: self.max_n_deals] = (
-            b_actions_sorted[: self.max_n_deals]
-            - s_actions_sorted[: self.max_n_deals]
+            b_actions_sorted[: self.max_n_deals] - s_actions_sorted[: self.max_n_deals]
         )
         no_deal_mask = (
             bid_offer_diffs <= 0
         )  # if true => no deal, if the bid is lower than the offer no deal happens
         s_realized_sorted_deals = s_actions_sorted.clone()
-        s_realized_sorted_deals = torch.mul(s_realized_sorted_deals, ~no_deal_mask[: self.n_sellers])
+        s_realized_sorted_deals = torch.mul(
+            s_realized_sorted_deals, ~no_deal_mask[: self.n_sellers]
+        )
 
         b_realized_sorted_deals = b_actions_sorted.clone()
-        b_realized_sorted_deals = torch.mul(b_realized_sorted_deals, ~no_deal_mask[: self.n_buyers])
+        b_realized_sorted_deals = torch.mul(
+            b_realized_sorted_deals, ~no_deal_mask[: self.n_buyers]
+        )
 
         # calculating deal prices
         sorted_deal_prices = torch.zeros(self.max_group_size)

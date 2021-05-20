@@ -9,24 +9,26 @@ from typing import Any, List, Tuple, Union, Optional
 
 class ReplayBuffer(TianshouRBuffer):
     def __init__(
-            self,
-            size: int,
-            stack_num: int = 1,
-            ignore_obs_next: bool = False,
-            save_only_last_obs: bool = False,
-            sample_avail: bool = False,
-            **kwargs: Any,  # otherwise PrioritizedVectorReplayBuffer will cause TypeError
+        self,
+        size: int,
+        stack_num: int = 1,
+        ignore_obs_next: bool = False,
+        save_only_last_obs: bool = False,
+        sample_avail: bool = False,
+        **kwargs: Any,  # otherwise PrioritizedVectorReplayBuffer will cause TypeError
     ) -> None:
-        super(ReplayBuffer, self).__init__(size,
-                                           stack_num=stack_num,
-                                           ignore_obs_next=ignore_obs_next,
-                                           save_only_last_obs=save_only_last_obs,
-                                           sample_avail=sample_avail,
-                                           **kwargs)
+        super(ReplayBuffer, self).__init__(
+            size,
+            stack_num=stack_num,
+            ignore_obs_next=ignore_obs_next,
+            save_only_last_obs=save_only_last_obs,
+            sample_avail=sample_avail,
+            **kwargs,
+        )
 
     # Overwrite the add attribute to allow for rewards of type torch.Tensor
     def add(
-            self, batch: Batch, buffer_ids: Optional[Union[np.ndarray, List[int]]] = None
+        self, batch: Batch, buffer_ids: Optional[Union[np.ndarray, List[int]]] = None
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Add a batch of data into replay buffer.
         :param Batch batch: the input data batch. Its keys must belong to the 7
@@ -59,9 +61,7 @@ class ReplayBuffer(TianshouRBuffer):
             rew, done = batch.rew[0], batch.done[0]
         else:
             rew, done = batch.rew, batch.done
-        ptr, ep_rew, ep_len, ep_idx = list(
-            map(lambda x: x, self._add_index(rew, done))
-        )
+        ptr, ep_rew, ep_len, ep_idx = list(map(lambda x: x, self._add_index(rew, done)))
         try:
             self._meta[ptr] = batch
         except ValueError:
@@ -69,8 +69,7 @@ class ReplayBuffer(TianshouRBuffer):
             # batch.rew = batch.rew.astype(float) --> not compatible with torch.Tensor
             batch.done = batch.done.astype(bool)
             if self._meta.is_empty():
-                self._meta = _create_value(  # type: ignore
-                    batch, self.maxsize, stack)
+                self._meta = _create_value(batch, self.maxsize, stack)  # type: ignore
             else:  # dynamic key pops up in batch
                 _alloc_by_keys_diff(self._meta, batch, self.maxsize, stack)
             self._meta[ptr] = batch

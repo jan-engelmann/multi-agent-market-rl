@@ -3,8 +3,7 @@
 from __future__ import division
 
 import torch
-import numpy as np
-from gym.spaces import Discrete, Box, Tuple
+import inspect
 
 
 class InformationSetting:
@@ -13,25 +12,19 @@ class InformationSetting:
 
     Attributes
     ----------
+    market: MarketEngine object
+            The current market object.
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, market):
+        self.market = market
 
-    def get_states(self, market):
+    def get_states(self):
         """
         Compute the observations of agents given the market object.
 
-        Parameters
-        ----------
-        market: MarketEngine object
-            The current market object.
-
         """
         pass
-
-    def get_state(self, market):
-        return self.get_states(market)
 
 
 class BlackBoxSetting(InformationSetting):
@@ -40,15 +33,18 @@ class BlackBoxSetting(InformationSetting):
 
     """
 
-    def get_states(self, market):
-        n_agents = market.n_agents
-        n_sellers = market.n_sellers
+    def __init__(self, market, **kwargs):
+        super(BlackBoxSetting, self).__init__(market)
+
+    def get_states(self):
+        n_agents = self.market.n_agents
+        n_sellers = self.market.n_sellers
         total_info = torch.zeros(n_agents, 1)
-        if not (market.buyer_history or market.seller_history):
+        if not (self.market.buyer_history or self.market.seller_history):
             return total_info
 
-        b_actions = market.buyer_history[-1]
-        s_actions = market.seller_history[-1]
+        b_actions = self.market.buyer_history[-1]
+        s_actions = self.market.seller_history[-1]
 
         total_info[:n_sellers, 0] = s_actions
         total_info[n_sellers:, 0] = b_actions
@@ -67,42 +63,39 @@ class OfferInformationSetting(InformationSetting):
 
     Parameters
     ----------
-    n_offers: int, optional (default=5)
+    n_offers_info: int, optional (default=5)
         Number of offers to see. For instance, 5 would mean the agents see the
         best 5 bids and asks.
 
     """
 
-    def __init__(self, n_offers=5):
-        self.n_offers = n_offers
+    def __init__(self, market, **kwargs):
+        self.n_offers = kwargs.pop("n_offers", 5)
+        super(OfferInformationSetting, self).__init__(market)
 
-    def get_states(self, market):
-        assert self.n_offers <= market.n_buyers
-        assert self.n_offers <= market.n_sellers
+    def get_states(self):
+        assert self.n_offers <= self.market.n_buyers
+        assert self.n_offers <= self.market.n_sellers
 
         n = self.n_offers
-        n_agents = market.n_agents
+        n_agents = self.market.n_agents
         total_info = torch.zeros(n_agents, 2, n)
-        if not (market.buyer_history or market.seller_history):
+        if not (self.market.buyer_history or self.market.seller_history):
             # Return total_info as tensor with shape (n_agents, n_features) where n_features == 2 * n_offers
             return total_info.contiguous().view(n_agents, -1)
 
         # Each history contains a list of tensors of shape (n_agents,) for sellers and buyers
         # respectively
-        b_actions = market.buyer_history[-1]
-        s_actions = market.seller_history[-1]
+        b_actions = self.market.buyer_history[-1]
+        s_actions = self.market.seller_history[-1]
 
         # sort the buyer and seller actions inorder to find the N best offers of either side.
         # Best: seller --> lowest | buyer --> highest
         s_actions_sorted = s_actions.sort()[0][:n]
         b_actions_sorted = b_actions.sort(descending=True)[0][:n]
 
-        total_info[:, 0, :] = b_actions_sorted.unsqueeze(0).expand(
-            n_agents, n
-        )
-        total_info[:, 1, :] = s_actions_sorted.unsqueeze(0).expand(
-            n_agents, n
-        )
+        total_info[:, 0, :] = b_actions_sorted.unsqueeze(0).expand(n_agents, n)
+        total_info[:, 1, :] = s_actions_sorted.unsqueeze(0).expand(n_agents, n)
 
         # The information each agent gets is the same
         # Return total_info as tensor with shape (n_agents, n_features) where n_features == 2 * n_offers
@@ -128,21 +121,28 @@ class DealInformationSetting(InformationSetting):
 
     """
 
-    def __init__(self, n_deals=5):
-        self.n_deals = n_deals
+    def __init__(self, market, **kwargs):
+        self.n_deals = kwargs.pop("n_deals", 5)
+        super(DealInformationSetting, self).__init__(market)
 
-    def get_states(self, market):
-        n_agents = market.n_agents
+    def get_states(self):
+        n_agents = self.market.n_agents
         total_info = torch.zeros(n_agents, self.n_deals)
 
-        if not market.deal_history:
+        if not self.market.deal_history:
             return total_info
 
         # Get the N best deals from the last round.
         # deal_history is already sorted.
         total_info = (
-            market.deal_history[-1][:self.n_deals].unsqueeze(0).expand(n_agents, self.n_deals)
-        ).clone().detach()
+            (
+                self.market.deal_history[-1][: self.n_deals]
+                .unsqueeze(0)
+                .expand(n_agents, self.n_deals)
+            )
+            .clone()
+            .detach()
+        )
         return total_info
 
 
@@ -164,16 +164,20 @@ class TimeInformationWrapper(InformationSetting):
 
     """
 
-    def __init__(self, base_setting, max_steps=30):
-        self.base_setting = base_setting
-        self.max_steps = max_steps
+    def __init__(self, market, **kwargs):
+        base_setting = kwargs.pop("base_setting", "BlackBoxSetting")
 
-    def get_states(self, market):
-        n_agents = market.n_agents
-        base_obs = self.base_setting.get_states(market)
+        if inspect.isclass(type(base_setting)):
+            self.base_setting = base_setting
+        else:
+            self.base_setting = locals()[base_setting](market, **kwargs)
+
+    def get_states(self):
+        n_agents = self.market.n_agents
+        base_obs = self.base_setting.get_states(self.market)
 
         # We want zero to indicate the initial state of the market and 1 to indicate the end state of the market.
-        normalized_time = market.time / self.max_steps
+        normalized_time = self.market.time / self.market.max_steps
         # TODO: put this together with environment time constraints
         assert normalized_time <= 1  # otherwise time constraint violated
 
