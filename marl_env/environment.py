@@ -8,10 +8,49 @@ import torch
 import inspect
 import itertools
 
+import marl_env.agents as agents
 import marl_env.markets as markets
 import marl_env.info_setting as inf_setting
 import marl_env.reward_setting as rew_setting
 import marl_env.exploration_setting as expo_setting
+
+
+def get_basic_agent_info(agent_dict):
+    n_agents = {"sellers": 0, "buyers": 0}
+    reservations = {"sellers": [], "buyers": []}
+
+    for role in ["sellers", "buyers"]:
+        for key in agent_dict[role]:
+            multi = agent_dict[role][key].get("multiplicity", 1)
+            n_agents[role] += multi
+            reservations[role] += multi * [agent_dict[role][key]["reservation"]]
+    return n_agents, reservations
+
+
+def generate_agents(agent_dict):
+    all_agents = {"sellers": [], "buyers": []}
+
+    input_shape = agent_dict.pop("input_shape")
+    for roles in ["sellers", "buyers"]:
+        action_boundary = agent_dict[roles].pop("action_boundary")
+        for key in agent_dict[roles]:
+            agent = []
+            multi = agent_dict[roles][key].pop("multiplicity", 1)
+            agent_type = agent_dict[roles][key].pop("type")
+            reservation = agent_dict[roles][key].pop("reservation")
+            for _ in range(multi):
+                agent += [
+                    getattr(agents, agent_type)(
+                        roles[:-1],
+                        reservation,
+                        input_shape,
+                        action_boundary,
+                        **agent_dict[roles][key]
+                    )
+                ]
+            all_agents[roles] += agent
+
+    return all_agents
 
 
 def get_agent_actions(agent, observation, epsilon, random_action):
@@ -44,58 +83,115 @@ def get_agent_actions(agent, observation, epsilon, random_action):
 class MultiAgentEnvironment:
     def __init__(
         self,
-        sellers,
-        buyers,
-        s_reservations,
-        b_reservations,
-        info_setting,
+        agent_dict,
         market,
+        info_setting,
         exploration_setting,
         reward_setting,
         **kwargs
     ):
         """
-        TODO: Add some documentation...
         Parameters
         ----------
-        sellers
-        buyers
-        market
-        info_setting
+        agent_dict: dict
+            Nested dictionary of shape {
+                'sellers': {1: {
+                                'type': 'DQNAgent',
+                                'reservation': 12,
+                                'multiplicity': 3,
+                                **kwargs
+                                }
+                            ...
+                            }
+                'buyers': {1: {
+                                'type': 'DQNAgent',
+                                'reservation': 5,
+                                **kwargs
+                                }
+                            ...
+                            }
+                }
+            Containing meta_info for all wanted sellers and buyers
+            Mandatory keywords are:
+                    'type': str
+                        Name of the wanted agents class object
+                    'reservation': int
+                        Reservation price for this agent
+            Optional keywords are:
+                    'multiplicity': int
+                        Multiplicity count of the agent (default=1)
+                    **kwargs:
+                        Additional keyword arguments specific to the agent type
+        market: str or markets class object
+        info_setting: str or info_setting class object
+        exploration_setting: str or exploration_setting class object
+        reward_setting: str or reward_setting class object
+        kwargs: dict, optional
+            Nested dictionary of shape {
+                            'market_setting': {....},
+                            'info_setting': {....},
+                            'exploration_setting': {....},
+                            'reward_setting': {....}
+                            }
+            Allowing to fine tune keyword arguments of the individual settings.
         """
+        n_agents, reservations = get_basic_agent_info(agent_dict)
 
-        self.n_sellers = len(sellers)
-        self.n_buyers = len(buyers)
+        self.n_sellers = n_agents["sellers"]
+        self.n_buyers = n_agents["buyers"]
         self.n_agents = self.n_sellers + self.n_buyers
         self.max_n_deals = min(self.n_buyers, self.n_sellers)
         self.max_group_size = max(self.n_buyers, self.n_sellers)
 
-        self.s_reservations = s_reservations
-        self.b_reservations = b_reservations
+        self.s_reservations = torch.Tensor(reservations["sellers"])
+        self.b_reservations = torch.Tensor(reservations["buyers"])
 
-        self.sellers = sellers
-        self.buyers = buyers
-        self.all_agents = sellers + buyers
+        agent_dict["sellers"]["action_boundary"] = max(reservations["buyers"])
+        agent_dict["buyers"]["action_boundary"] = min(reservations["sellers"])
 
         if isinstance(market, str):
             self.market = getattr(markets, market)(
-                len(sellers), len(buyers), **kwargs.pop("market_settings", {})
+                n_agents["sellers"],
+                n_agents["buyers"],
+                **kwargs.pop("market_settings", {})
             )
         else:
             assert inspect.isclass(
                 type(market)
             ), "Provide market class object or string name of market class object"
+            assert market.n_sellers == n_agents["sellers"], (
+                "Ups, looks like the number of sellers provided to the market does not match with the number of "
+                "sellers found in the agent dictionary"
+            )
+            assert market.n_buyers == n_agents["buyers"], (
+                "Ups, looks like the number of buyers provided to the market does not match with the number of buyers "
+                "found in the agent dictionary"
+            )
             self.market = market
 
-        if isinstance(reward_setting, str):
-            self.reward_setting = getattr(rew_setting, reward_setting)(
-                self, **kwargs.pop("reward_setting", {})
+        if isinstance(info_setting, str):
+            self.info_setting = getattr(inf_setting, info_setting)(
+                self.market, **kwargs.pop("info_setting", {})
             )
+            input_shape = tuple(self.info_setting.get_states()[0, :].size())[-1]
         else:
-            assert inspect.isclass(type(reward_setting)), (
-                "Provide reward class object or string " "name of reward class object"
+            assert inspect.isclass(type(info_setting)), (
+                "Provide information class object or string name of "
+                "information class object"
             )
-            self.reward_setting = reward_setting
+            self.info_setting = info_setting
+            input_shape = tuple(self.info_setting.get_states()[0, :].size())[-1]
+        agent_dict["input_shape"] = input_shape
+
+        all_agents = generate_agents(agent_dict)
+        self.sellers = all_agents["sellers"]
+        self.buyers = all_agents["buyers"]
+        self.all_agents = all_agents["sellers"] + all_agents["buyers"]
+
+        print("selers", self.sellers)
+        print("n_sellers", self.n_sellers)
+        print("buyers", self.buyers)
+        print("n_buyers", self.n_buyers)
 
         if isinstance(exploration_setting, str):
             self.exploration_setting = getattr(expo_setting, exploration_setting)(
@@ -108,16 +204,15 @@ class MultiAgentEnvironment:
             )
             self.exploration_setting = exploration_setting
 
-        if isinstance(info_setting, str):
-            self.info_setting = getattr(inf_setting, info_setting)(
-                self.market, **kwargs.pop("info_setting", {})
+        if isinstance(reward_setting, str):
+            self.reward_setting = getattr(rew_setting, reward_setting)(
+                self, **kwargs.pop("reward_setting", {})
             )
         else:
-            assert inspect.isclass(type(info_setting)), (
-                "Provide information class object or string name of "
-                "information class object"
-            )
-            self.info_setting = info_setting
+            assert inspect.isclass(
+                type(reward_setting)
+            ), "Provide reward class object or string name of reward class object"
+            self.reward_setting = reward_setting
 
         self.random_action = False
         self.done = False
