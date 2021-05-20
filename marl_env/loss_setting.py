@@ -37,21 +37,12 @@ class LossSetting:
 
 class SimpleLossSetting(LossSetting):
     """
-    Parameters
-    ----------
-    epsilon: float, optional (default=1e-6)
-        Float value describing the smallest allowed difference between |aks - bid|.
-        This is used to compute the maximum reward.
-
     Returns
     -------
     total_loss: torch.Tensor
-        Tensor of shape (n_environments, n_agents) containing all losses.
-        total_loss[:, :n_sellers] contains all losses from agents with the roll as seller
-        total_loss[:, n_sellers:] contains all losses from agents with the roll as buyer
-
-    TODO: Think about what tensors should be included in autograph and which need to be detached
-          Rework this implementation, making use of desecrate action spaces --> no need for arbitrary epsilon!
+        Tensor of shape (n_agents,) containing all losses.
+        total_loss[:n_sellers] contains all losses from agents with the roll as seller
+        total_loss[n_sellers:] contains all losses from agents with the roll as buyer
     """
 
     def get_losses(self, env, s_rewards, b_rewards):
