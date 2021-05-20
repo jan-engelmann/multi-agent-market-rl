@@ -7,7 +7,7 @@ class AgentSetting:
     Abstract agent class
 
     """
-    def __init__(self, role, reservation, in_features, action_boundary, q_lr=0.001, target_lr=0.001) -> None:
+    def __init__(self, role, reservation, in_features, action_boundary, q_lr=0.001) -> None:
         pass
 
     def get_action(self, observation, epsilon=0.05):
@@ -41,7 +41,6 @@ class DQNAgent(AgentSetting):
         """
         assert role in ["buyer", "seller"], "role should be 'buyer' or 'seller'"
         assert reservation > 0, "reservation price needs to be larger then zero"
-        self.role = role
         self.reservation = reservation
 
         # For Buyer: Action space is the closed interval of [min_s_reservation, self.reservation]
@@ -50,7 +49,7 @@ class DQNAgent(AgentSetting):
         #     The highest possible action is given by the reservation price of the buyer that denotes his budget.
         #
         # For Seller: Action space is the closed interval of [self.reservation, max_b_reservation]
-        #     Where max_b_reservation denotes the largest reservation price of all sellers. Therefore this action will
+        #     Where max_b_reservation denotes the largest reservation price of all buyers. Therefore this action will
         #     result in 'no action' since the asking price of a seller must be smaller then the reservation price of a
         #     buyer.
         #     The lowest possible action is given by the reservation price of a seller guaranteeing a minimal profit
@@ -61,9 +60,8 @@ class DQNAgent(AgentSetting):
             self.action_space = np.arange(reservation, action_boundary + 1)
 
         self.qNetwork = None
-        self.q_opt = None
-
         self.targetNetwork = None
+        self.q_opt = None
 
         # Number of out_features is equal to the number of possible actions. Therefore the number of out_features is
         # given by the length of the action_space.
@@ -71,7 +69,6 @@ class DQNAgent(AgentSetting):
         self.set_q_network(in_features, out_features)
         self.set_target_network(in_features, out_features)
         self.reset_target_network()
-
         self.set_optimizers(q_lr)
 
     def set_q_network(self, in_features, out_features):
@@ -135,7 +132,7 @@ class DQNAgent(AgentSetting):
         ----------
         observation: torch.Tensor
         epsilon: float
-            epsilon defines the exploration rate (0,1). With a probability of epsilon the agent will perform a random
+            epsilon defines the exploration rate [0,1]. With a probability of epsilon the agent will perform a random
             action.
 
         Returns
@@ -145,7 +142,7 @@ class DQNAgent(AgentSetting):
         if torch.bernoulli(torch.Tensor([epsilon])):
             idx = torch.randint(len(self.action_space), (1,))
         else:
-            q_values = self.qNetwork(observation).squeeze(1)
+            q_values = self.qNetwork(observation).squeeze()
             idx = torch.argmax(q_values)
         action_price = self.action_space[idx]
         return torch.Tensor([action_price])
