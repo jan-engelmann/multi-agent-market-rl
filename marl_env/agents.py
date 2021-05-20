@@ -8,10 +8,27 @@ class AgentSetting:
 
     """
 
-    def __init__(
-        self, role, reservation, in_features, action_boundary, q_lr=0.001
-    ) -> None:
-        pass
+    def __init__(self, role, reservation, in_features, action_boundary) -> None:
+        assert role in ["buyer", "seller"], "role should be 'buyer' or 'seller'"
+        assert reservation > 0, "reservation price needs to be larger then zero"
+        self.reservation = reservation
+        self.in_features = in_features
+
+        # For Buyer: Action space is the closed interval of [min_s_reservation, self.reservation]
+        #     Where min_s_reservation denotes the smallest reservation price of all sellers. Therefore this action will
+        #     result in 'no action' since a buyer must always bide higher then the reservation price of a seller.
+        #     The highest possible action is given by the reservation price of the buyer that denotes his budget.
+        #
+        # For Seller: Action space is the closed interval of [self.reservation, max_b_reservation]
+        #     Where max_b_reservation denotes the largest reservation price of all buyers. Therefore this action will
+        #     result in 'no action' since the asking price of a seller must be smaller then the reservation price of a
+        #     buyer.
+        #     The lowest possible action is given by the reservation price of a seller guaranteeing a minimal profit
+        #     of 0.5 in case a deal is reached.
+        if role == "buyer":
+            self.action_space = np.arange(action_boundary, reservation + 1)
+        else:
+            self.action_space = np.arange(reservation, action_boundary + 1)
 
     def get_action(self, observation, epsilon=0.05):
         raise NotImplementedError
@@ -22,7 +39,7 @@ class AgentSetting:
 
 class DQNAgent(AgentSetting):
     def __init__(
-        self, role, reservation, in_features, action_boundary, q_lr=0.001
+        self, role, reservation, in_features, action_boundary, **kwargs
     ) -> None:
         """
         Agents are implemented in such a manner, that asking and bidding prices are given as integer values. Therefore
@@ -41,28 +58,12 @@ class DQNAgent(AgentSetting):
         action_boundary: int
             In case the agent is a seller, action_boundary should equal the largest reservation price of all buyers.
             In case the agent is a buyer, action_boundary should equal the smallest reservation price of all sellers.
-        q_lr: float, optional (default=0.001)
-            Learning rate provided to the Q-Network optimizer
-        """
-        assert role in ["buyer", "seller"], "role should be 'buyer' or 'seller'"
-        assert reservation > 0, "reservation price needs to be larger then zero"
-        self.reservation = reservation
 
-        # For Buyer: Action space is the closed interval of [min_s_reservation, self.reservation]
-        #     Where min_s_reservation denotes the smallest reservation price of all sellers. Therefore this action will
-        #     result in 'no action' since a buyer must always bide higher then the reservation price of a seller.
-        #     The highest possible action is given by the reservation price of the buyer that denotes his budget.
-        #
-        # For Seller: Action space is the closed interval of [self.reservation, max_b_reservation]
-        #     Where max_b_reservation denotes the largest reservation price of all buyers. Therefore this action will
-        #     result in 'no action' since the asking price of a seller must be smaller then the reservation price of a
-        #     buyer.
-        #     The lowest possible action is given by the reservation price of a seller guaranteeing a minimal profit
-        #     of 0.5 in case a deal is reached.
-        if role == "buyer":
-            self.action_space = np.arange(action_boundary, reservation + 1)
-        else:
-            self.action_space = np.arange(reservation, action_boundary + 1)
+        kwargs:
+            q_lr: float, optional (default=0.001)
+                Learning rate provided to the Q-Network optimizer
+        """
+        super(DQNAgent, self).__init__(role, reservation, in_features, action_boundary)
 
         self.qNetwork = None
         self.targetNetwork = None
@@ -71,10 +72,10 @@ class DQNAgent(AgentSetting):
         # Number of out_features is equal to the number of possible actions. Therefore the number of out_features is
         # given by the length of the action_space.
         out_features = len(self.action_space)
-        self.set_q_network(in_features, out_features)
-        self.set_target_network(in_features, out_features)
+        self.set_q_network(self.in_features, out_features)
+        self.set_target_network(self.in_features, out_features)
         self.reset_target_network()
-        self.set_optimizers(q_lr)
+        self.set_optimizers(kwargs.pop("q_lr", 0.001))
 
     def set_q_network(self, in_features, out_features):
         # in_features is determined by the info_setting --> How many features does the agent see.
