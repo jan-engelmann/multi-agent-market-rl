@@ -3,13 +3,14 @@ import typing
 
 
 class BaseMarketEngine:
-    def __init__(self, n_sellers, n_buyers, max_steps=30):
+    def __init__(self, n_sellers, n_buyers, **kwargs):
         self.n_sellers = n_sellers
         self.n_buyers = n_buyers
         self.n_agents = n_sellers + n_buyers
-        self.max_steps = max_steps
         self.max_group_size = max(n_buyers, n_sellers)
         self.max_n_deals = min(n_buyers, n_sellers)
+
+        self.max_steps = kwargs.pop('max_steps', 30)
 
         self.time = 0
         self.buyer_history = list()
@@ -58,9 +59,9 @@ class BaseMarketEngine:
 class MarketMatchHiLo(BaseMarketEngine):
     """
     """
-    def __init__(self, n_sellers, n_buyers, max_steps=30):
+    def __init__(self, n_sellers, n_buyers, **kwargs):
         super(MarketMatchHiLo, self).__init__(
-            n_sellers, n_buyers, max_steps=max_steps
+            n_sellers, n_buyers, **kwargs
         )
 
     def calculate_deals(self, s_actions, b_actions):
@@ -97,8 +98,8 @@ class MarketMatchHiLo(BaseMarketEngine):
             0, b_actions_indices.argsort().squeeze()
         )
 
-        deals_sellers_orginal = sorted_deal_prices[: self.n_sellers].gather(
+        deals_sellers_original = sorted_deal_prices[: self.n_sellers].gather(
             0, s_actions_indices.argsort().squeeze()
         )
 
-        return deals_sellers_orginal, deals_buyers_original
+        return deals_sellers_original, deals_buyers_original
