@@ -51,11 +51,8 @@ class SimpleLossSetting(LossSetting):
         total_loss[:, n_sellers:] contains all losses from agents with the roll as buyer
 
     TODO: Think about what tensors should be included in autograph and which need to be detached
-          Rework this implementation, making use of descreat action spaces --> no need for arbitrary epsilon!
+          Rework this implementation, making use of desecrate action spaces --> no need for arbitrary epsilon!
     """
-
-    def __init__(self, epsilon=1e-6):
-        self.epsilon = epsilon
 
     def get_losses(self, env, s_rewards, b_rewards):
         self.n_sellers = env.n_sellers
