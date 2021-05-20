@@ -5,14 +5,11 @@ class ExplorationSetting:
     """
 
     """
-    def __init__(self, initial_exp, final_exp, n_exp_steps):
+    def __init__(self, **kwargs):
         """
 
         Parameters
         ----------
-        initial_exp
-        final_exp
-        n_exp_steps
         """
         pass
 
@@ -24,12 +21,14 @@ class LinearExplorationDecline(ExplorationSetting):
     """
 
     """
-    def __init__(self, initial_exp, final_exp, n_exp_steps):
-        self.epsilon = initial_exp
-        self.tot_steps = n_exp_steps
+    def __init__(self, **kwargs):
+        self.epsilon = kwargs.pop('initial_expo', 1.0)
+        self.tot_steps = kwargs.pop('n_expo_steps', 100000)
         self.current_step = 0
 
-        self.all_epsilon_values = np.linspace(initial_exp, final_exp, num=n_exp_steps)
+        self.all_epsilon_values = np.linspace(self.epsilon,
+                                              kwargs.pop('final_expo', 0),
+                                              num=self.tot_steps)
 
     def update(self):
         if self.current_step < self.tot_steps - 1:
