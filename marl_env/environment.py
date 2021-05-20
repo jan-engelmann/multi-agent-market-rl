@@ -7,9 +7,9 @@ if __name__ == "__main__":
 import torch
 import itertools
 
-from marl_env.info_setting import (
-    OfferInformationSetting,
-)
+import marl_env.markets as markets
+import marl_env.reward_setting as rew_setting
+import marl_env.exploration_setting as expo_setting
 
 
 def get_agent_actions(agent, observation, epsilon, random_action):
@@ -46,10 +46,11 @@ class MultiAgentEnvironment:
         buyers,
         s_reservations,
         b_reservations,
-        market,
         info_setting,
+        market,
         exploration_setting,
-        n_environments,
+        reward_setting,
+        **kwargs
     ):
         """
         TODO: Add some documentation...
@@ -59,7 +60,6 @@ class MultiAgentEnvironment:
         buyers
         market
         info_setting
-        n_environments
         """
 
         self.n_sellers = len(sellers)
@@ -67,7 +67,6 @@ class MultiAgentEnvironment:
         self.n_agents = self.n_sellers + self.n_buyers
         self.max_n_deals = min(self.n_buyers, self.n_sellers)
         self.max_group_size = max(self.n_buyers, self.n_sellers)
-        self.n_environments = n_environments  # batch_size
 
         self.s_reservations = s_reservations
         self.b_reservations = b_reservations
@@ -76,9 +75,10 @@ class MultiAgentEnvironment:
         self.buyers = buyers
         self.all_agents = sellers + buyers
 
-        self.market = market
-        self.info_setting: OfferInformationSetting = info_setting
-        self.exploration_setting = exploration_setting
+        self.info_setting = info_setting
+        self.exploration_setting = getattr(expo_setting, exploration_setting)(**kwargs)
+        self.market = getattr(markets, market)(len(sellers), len(buyers), **kwargs)
+        self.reward_setting = getattr(rew_setting, reward_setting)(self, **kwargs)
 
         self.random_action = False
         self.done = False
@@ -91,10 +91,10 @@ class MultiAgentEnvironment:
 
         # Create a mask keeping track of which agent is already done in the current game.
         self.done_sellers = torch.full(
-            (self.n_environments, self.n_sellers), False, dtype=torch.bool
+            (self.n_sellers,), False, dtype=torch.bool
         )
         self.done_buyers = torch.full(
-            (self.n_environments, self.n_buyers), False, dtype=torch.bool
+            (self.n_buyers,), False, dtype=torch.bool
         )
         self.newly_finished_sellers = self.done_sellers.clone()
         self.newly_finished_buyers = self.done_buyers.clone()
@@ -103,7 +103,6 @@ class MultiAgentEnvironment:
         self.observations = []
 
     def get_actions(self):
-        # TODO: improve distributed calculation
         agent_observation_tuples = [
             (agent, obs, self.exploration_setting.epsilon, self.random_action)
             for agent, obs in zip(
@@ -117,22 +116,16 @@ class MultiAgentEnvironment:
                     agent_observation_tuples,
                 )
             )
-        ).T
-        return torch.split(res, [self.n_sellers, self.n_buyers], dim=1)
+        ).T.squeeze()
+        return torch.split(res, [self.n_sellers, self.n_buyers], dim=-1)
 
     def calculate_rewards(self, deals_sellers, deals_buyers):
-        rewards_sellers = deals_sellers - self.s_reservations[None, :]
-
-        rewards_buyers = self.b_reservations[None, :] - deals_buyers
-
-        # Agents who are finished since the previous round receive a zero reward.
-        rewards_sellers = torch.mul(rewards_sellers, ~self.done_sellers)
-        rewards_buyers = torch.mul(rewards_buyers, ~self.done_buyers)
+        rewards_sellers = self.reward_setting.seller_reward(deals_sellers)
+        rewards_buyers = self.reward_setting.buyer_reward(deals_buyers)
 
         return rewards_sellers, rewards_buyers
 
     def store_observations(self):
-        # TODO: actually implement valid observations
         self.observations.append(self.info_setting.get_states(self.market))
 
     def step(self, random_action=False):
@@ -146,20 +139,20 @@ class MultiAgentEnvironment:
         -------
         current_observations: torch.Tensor
             All agent observations at the current time step t. The zero dimension has size self.n_agents
-            current_observations[:n_sellers,:,:] contains all observations for the seller agents
-            current_observations[n_sellers:,:,:] contains all observations for the buyer agents
+            current_observations[:n_sellers, :] contains all observations for the seller agents
+            current_observations[n_sellers:, :] contains all observations for the buyer agents
         current_actions: torch.Tensor
             All agent actions at the current time step t. The last dimension has size self.n_agents
-            current_actions[:, :n_sellers] contains all actions for the seller agents
-            current_actions[: , n_sellers:] contains all actions for the buyer agents
+            current_actions[:n_sellers] contains all actions for the seller agents
+            current_actions[n_sellers:] contains all actions for the buyer agents
         current_rewards: torch.Tensor
             All agent rewards at the current time step t. The last dimension has size self.n_agents
-            current_rewards[:, :n_sellers] contains all rewards for the seller agents
-            current_rewards[: , n_sellers:] contains all rewards for the buyer agents
+            current_rewards[:n_sellers] contains all rewards for the seller agents
+            current_rewards[n_sellers:] contains all rewards for the buyer agents
         next_observation: torch.Tensor
             All agent observations at the next time step t + 1. The zero dimension has size self.n_agents
-            next_observation[:n_sellers,:,:] contains all observations for the seller agents
-            next_observation[n_sellers:,:,:] contains all observations for the buyer agents
+            next_observation[:n_sellers, :] contains all observations for the seller agents
+            next_observation[n_sellers:, :] contains all observations for the buyer agents
         self.done: bool
             True if all agents are done trading or if the the game has come to an end
         """
@@ -167,13 +160,14 @@ class MultiAgentEnvironment:
 
         self.store_observations()
         s_actions, b_actions = self.get_actions()
+        print("obs ", self.observations[-1])
+        print("s_act ", s_actions)
+        print("b_act ", b_actions)
 
         # Mask seller and buyer actions for agents which are already done
         # We set the asking price of sellers who are done to max(b_reservations)
         # and the biding price of buyers who are done to min(s_reservations)
         # This results in actions not capable of producing a deal and therefore not interfering with other agents.
-        # We make use of element wise multiplication with masking tensors in order to prevent inplace
-        # operations (we hope...)
         with torch.no_grad():
             s_mask_val = self.b_reservations.max()
             b_mask_val = self.s_reservations.min()
@@ -181,6 +175,8 @@ class MultiAgentEnvironment:
         b_actions = torch.mul(b_mask_val, self.done_buyers) + torch.mul(b_actions, ~self.done_buyers)
 
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
+        print("s_deal ", deals_sellers)
+        print("b_deal", deals_buyers)
 
         with torch.no_grad():
             self.newly_finished_sellers = deals_sellers > 0
@@ -189,6 +185,8 @@ class MultiAgentEnvironment:
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
+        print("s_rew ", rewards_sellers)
+        print("b_rew ", rewards_buyers)
 
         # Update the exploration value epsilon.
         self.exploration_setting.update()
@@ -203,6 +201,7 @@ class MultiAgentEnvironment:
             self.done = True
         elif self.market.time == self.market.max_steps:
             self.done = True
+        print("Done ", self.done)
 
         current_observations = self.observations[-1]
         current_actions = torch.cat([s_actions, b_actions], dim=-1)
