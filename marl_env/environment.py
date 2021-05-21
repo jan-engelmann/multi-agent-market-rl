@@ -188,11 +188,6 @@ class MultiAgentEnvironment:
         self.buyers = all_agents["buyers"]
         self.all_agents = all_agents["sellers"] + all_agents["buyers"]
 
-        print("selers", self.sellers)
-        print("n_sellers", self.n_sellers)
-        print("buyers", self.buyers)
-        print("n_buyers", self.n_buyers)
-
         if isinstance(exploration_setting, str):
             self.exploration_setting = getattr(expo_setting, exploration_setting)(
                 **kwargs.pop("exploration_setting", {})
@@ -293,9 +288,6 @@ class MultiAgentEnvironment:
 
         self.store_observations()
         s_actions, b_actions = self.get_actions()
-        print("obs ", self.observations[-1])
-        print("s_act ", s_actions)
-        print("b_act ", b_actions)
 
         # Mask seller and buyer actions for agents which are already done
         # We set the asking price of sellers who are done to max(b_reservations)
@@ -312,8 +304,6 @@ class MultiAgentEnvironment:
         )
 
         deals_sellers, deals_buyers = self.market.step(s_actions, b_actions)
-        print("s_deal ", deals_sellers)
-        print("b_deal", deals_buyers)
 
         with torch.no_grad():
             self.newly_finished_sellers = deals_sellers > 0
@@ -322,11 +312,14 @@ class MultiAgentEnvironment:
         rewards_sellers, rewards_buyers = self.calculate_rewards(
             deals_sellers, deals_buyers
         )
-        print("s_rew ", rewards_sellers)
-        print("b_rew ", rewards_buyers)
 
         # Update the exploration value epsilon.
         self.exploration_setting.update()
+
+        current_observations = self.observations[-1]
+        current_actions = torch.cat([s_actions, b_actions], dim=-1).detach()
+        current_rewards = torch.cat([rewards_sellers, rewards_buyers], dim=-1).detach()
+        agent_states = torch.cat([self.done_sellers, self.done_buyers], dim=-1).detach()
 
         # Update the mask keeping track of which agents are done in the current game.
         # This is done with the mask computed in the previous round. Since only agents who were finished since the
@@ -338,11 +331,6 @@ class MultiAgentEnvironment:
             self.done = True
         elif self.market.time == self.market.max_steps:
             self.done = True
-        print("Done ", self.done)
-
-        current_observations = self.observations[-1]
-        current_actions = torch.cat([s_actions, b_actions], dim=-1)
-        current_rewards = torch.cat([rewards_sellers, rewards_buyers], dim=-1)
 
         next_observation = self.info_setting.get_states()
 
@@ -351,5 +339,6 @@ class MultiAgentEnvironment:
             current_actions,
             current_rewards,
             next_observation,
+            agent_states,
             self.done,
         )
