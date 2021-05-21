@@ -128,10 +128,10 @@ class MultiAgentEnvironment:
         reward_setting: str or reward_setting class object
         kwargs: dict, optional
             Nested dictionary of shape {
-                            'market_setting': {....},
-                            'info_setting': {....},
-                            'exploration_setting': {....},
-                            'reward_setting': {....}
+                            'market_settings': {....},
+                            'info_settings': {....},
+                            'exploration_settings': {....},
+                            'reward_settings': {....}
                             }
             Allowing to fine tune keyword arguments of the individual settings.
         """
@@ -171,7 +171,7 @@ class MultiAgentEnvironment:
 
         if isinstance(info_setting, str):
             self.info_setting = getattr(inf_setting, info_setting)(
-                self.market, **kwargs.pop("info_setting", {})
+                self.market, **kwargs.pop("info_settings", {})
             )
             input_shape = tuple(self.info_setting.get_states()[0, :].size())[-1]
         else:
@@ -190,7 +190,7 @@ class MultiAgentEnvironment:
 
         if isinstance(exploration_setting, str):
             self.exploration_setting = getattr(expo_setting, exploration_setting)(
-                **kwargs.pop("exploration_setting", {})
+                **kwargs.pop("exploration_settings", {})
             )
         else:
             assert inspect.isclass(type(exploration_setting)), (
@@ -201,7 +201,7 @@ class MultiAgentEnvironment:
 
         if isinstance(reward_setting, str):
             self.reward_setting = getattr(rew_setting, reward_setting)(
-                self, **kwargs.pop("reward_setting", {})
+                self, **kwargs.pop("reward_settings", {})
             )
         else:
             assert inspect.isclass(
