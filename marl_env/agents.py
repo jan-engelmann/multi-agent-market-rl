@@ -11,6 +11,7 @@ class AgentSetting:
     def __init__(self, role, reservation, in_features, action_boundary) -> None:
         assert role in ["buyer", "seller"], "role should be 'buyer' or 'seller'"
         assert reservation > 0, "reservation price needs to be larger then zero"
+        self.role = role
         self.reservation = reservation
         self.in_features = in_features
 
@@ -171,7 +172,33 @@ class DQNAgent(AgentSetting):
         action_price = self.action_space[idx]
         return torch.Tensor([action_price])
 
-    def get_target(self, observation):
+    def get_target(self, observation, agent_state=None):
+        """
+
+        Parameters
+        ----------
+        observation
+        agent_state
+
+        Returns
+        -------
+
+        """
         q_values = self.targetNetwork(observation)
         max_q, _ = torch.max(q_values, dim=1)
-        return max_q.unsqueeze(0).transpose(0, 1)
+
+        # Get Q-values corresponding to 'no action'
+        if self.role == "buyer":
+            no_act = q_values[:, 0]
+        else:
+            no_act = q_values[:, -1]
+
+        if not torch.is_tensor(agent_state):
+            agent_state = torch.full_like(max_q, False, dtype=torch.bool)
+        else:
+            agent_state = agent_state.transpose(0, 1).squeeze()
+
+        # Mask samples where the agent was done since the previous round with the Q-value of 'no action'
+        res = torch.mul(max_q, ~agent_state) + torch.mul(no_act, agent_state)
+
+        return res.unsqueeze(0).transpose(0, 1)

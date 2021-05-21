@@ -24,7 +24,8 @@ class MeanAbsErrorTrainer:
 
     def setup(self):
         self.optimizers = [
-            torch.optim.Adam(agent.model.parameters(), lr=self.learning_rate) for agent in self.env.all_agents
+            torch.optim.Adam(agent.model.parameters(), lr=self.learning_rate)
+            for agent in self.env.all_agents
         ]
         # Set all initial gradients to zero. Is this really needed?
         for optimizer in self.optimizers:
@@ -36,13 +37,17 @@ class MeanAbsErrorTrainer:
         )
         for t_step in tqdm(range(self.training_steps)):
             obs, act, rew, _, _ = self.env.step()
-            s_rew, b_rew = torch.split(rew, [self.env.n_sellers, self.env.n_buyers], dim=1)
+            s_rew, b_rew = torch.split(
+                rew, [self.env.n_sellers, self.env.n_buyers], dim=1
+            )
             tot_loss = self.loss.get_losses(self.env, s_rew, b_rew)
             tot_loss.backward(torch.ones_like(tot_loss))
 
             for agent in range(self.env.n_agents):
                 old_params = {}
-                for name, param in enumerate(self.env.all_agents[agent].model.parameters()):
+                for name, param in enumerate(
+                    self.env.all_agents[agent].model.parameters()
+                ):
                     old_params[name] = param.clone()
                 self.optimizers[agent].step()  # parameter update
                 # if list(self.env.all_agents[0].model.parameters())[0].grad.data > 0:
@@ -63,14 +68,16 @@ class MeanAbsErrorTrainer:
 class DeepQTrainer:
     torch.autograd.set_detect_anomaly(True)
 
-    def __init__(self,
-                 env,
-                 memory_size,
-                 replay_start_size,
-                 update_frq=100,
-                 discount=0.99,
-                 max_loss_history=None,
-                 max_reward_history=None):
+    def __init__(
+        self,
+        env,
+        memory_size,
+        replay_start_size,
+        update_frq=100,
+        discount=0.99,
+        max_loss_history=None,
+        max_reward_history=None,
+    ):
         self.discount = discount
         self.update_frq = update_frq
         self.avg_loss_history = deque(maxlen=max_loss_history)
@@ -81,8 +88,8 @@ class DeepQTrainer:
         self.buffer = self.set_replay_buffer(memory_size, replay_start_size)
 
     @staticmethod
-    def get_agent_Q_target(agent, observations):
-        target = agent.get_target(observations)
+    def get_agent_Q_target(agent, observations, agent_state):
+        target = agent.get_target(observations, agent_state=agent_state)
         return target
 
     @staticmethod
@@ -116,12 +123,21 @@ class DeepQTrainer:
         buffer = ReplayBuffer(size=memory_size)
 
         for step in range(replay_start_size):
-            obs, act, rew, obs_next, done = self.env.step(random_action=True)
-            history_batch = Batch(obs=obs, act=act, rew=rew, done=done, obs_next=obs_next)
+            obs, act, rew, obs_next, a_states, done = self.env.step(random_action=True)
+            history_batch = Batch(
+                obs=obs,
+                act=act,
+                rew=rew,
+                done=done,
+                obs_next=obs_next,
+                a_states=a_states,
+            )
             buffer.add(history_batch)
         return buffer
 
-    def generate_Q_targets(self, obs_next, reward, end_of_eps, discount=0.99):
+    def generate_Q_targets(
+        self, obs_next, reward, agent_state, end_of_eps, discount=0.99
+    ):
         """
 
         Parameters
@@ -130,8 +146,10 @@ class DeepQTrainer:
             Tensor containing all observations for sampled time steps t_j + 1
         reward: torch.Tensor
             Tensor containing all rewards for the sampled time steps t_j
+        agent_state: torch.Tensor
+            Tensor indicating if an individual agent was finished at sampled time steps t_j
         end_of_eps: ndarray
-            Bool array indicating if episode was finished at sampled time step t_j
+            Bool array indicating if episode was finished at sampled time steps t_j
         discount: float
             Discount factor gamma used in the Q-learning update.
 
@@ -144,22 +162,25 @@ class DeepQTrainer:
             targets[:, n_sellers:] contains all targets for the buyer agents
         """
         agent_obs_next_tuples = [
-            (agent, obs_batch.transpose(0, 1))
-            for agent, obs_batch in zip(
-                self.env.all_agents, obs_next.squeeze().transpose(0, 1).unsqueeze(1)
+            (agent, obs_batch.transpose(0, 1), agent_state_batch.unsqueeze(1))
+            for agent, obs_batch, agent_state_batch in zip(
+                self.env.all_agents,
+                obs_next.squeeze().transpose(0, 1).unsqueeze(1),
+                agent_state.squeeze().transpose(0, 1),
             )
         ]
         targets = torch.stack(
             list(
                 itertools.starmap(
-                    DeepQTrainer.get_agent_Q_target,
-                    agent_obs_next_tuples
+                    DeepQTrainer.get_agent_Q_target, agent_obs_next_tuples
                 )
             ),
-            dim=1
+            dim=1,
         ).squeeze()
         targets = torch.mul(targets, discount)
-        targets = torch.mul(targets, torch.Tensor(~end_of_eps).unsqueeze(0).transpose(0, 1))
+        targets = torch.mul(
+            targets, torch.Tensor(~end_of_eps).unsqueeze(0).transpose(0, 1)
+        )
         targets = torch.add(targets, reward.squeeze())
         return targets
 
@@ -169,17 +190,14 @@ class DeepQTrainer:
             for agent, obs_batch, act_batch in zip(
                 self.env.all_agents,
                 obs.squeeze().transpose(0, 1).unsqueeze(1),
-                act.squeeze().transpose(0, 1).unsqueeze(1)
+                act.squeeze().transpose(0, 1).unsqueeze(1),
             )
         ]
         q_values = torch.stack(
             list(
-                itertools.starmap(
-                    DeepQTrainer.get_agent_Q_values,
-                    agent_obs_act_tuples
-                )
+                itertools.starmap(DeepQTrainer.get_agent_Q_values, agent_obs_act_tuples)
             ),
-            dim=1
+            dim=1,
         ).squeeze()
         return q_values
 
@@ -189,18 +207,28 @@ class DeepQTrainer:
             eps_loss = deque(maxlen=self.env.market.max_steps)
             eps_rew = deque(maxlen=self.env.market.max_steps)
             while not self.env.done:
-                obs, act, rew, obs_next, done = self.env.step()
-                history_batch = Batch(obs=obs, act=act, rew=rew, done=done, obs_next=obs_next)
+                obs, act, rew, obs_next, a_states, done = self.env.step()
+                history_batch = Batch(
+                    obs=obs,
+                    act=act,
+                    rew=rew,
+                    done=done,
+                    obs_next=obs_next,
+                    a_states=a_states,
+                )
                 self.buffer.add(history_batch)
 
                 # Sample a random minibatch of transitions from the replay buffer
                 batch_data, indice = self.buffer.sample(batch_size=batch_size)
 
-                q_targets = self.generate_Q_targets(batch_data['obs_next'],
-                                                    batch_data['rew'],
-                                                    batch_data['done'],
-                                                    discount=self.discount).detach()
-                q_values = self.generate_Q_values(batch_data['obs'], batch_data['act'])
+                q_targets = self.generate_Q_targets(
+                    batch_data["obs_next"],
+                    batch_data["rew"],
+                    batch_data["a_states"],
+                    batch_data["done"],
+                    discount=self.discount,
+                ).detach()
+                q_values = self.generate_Q_values(batch_data["obs"], batch_data["act"])
                 loss = DeepQTrainer.mse_loss(q_targets, q_values)
                 loss.backward(torch.ones(self.env.n_agents))
 
