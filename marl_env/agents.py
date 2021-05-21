@@ -37,6 +37,15 @@ class AgentSetting:
     def random_action(self, observation=None, epsilon=None):
         raise NotImplementedError
 
+    def get_q_value(self, observation, actions=None):
+        raise NotImplementedError
+
+    def get_target(self, observation, agent_state=None):
+        raise NotImplementedError
+
+    def reset_target_network(self):
+        raise NotImplementedError
+
 
 class DQNAgent(AgentSetting):
     def __init__(
@@ -107,32 +116,6 @@ class DQNAgent(AgentSetting):
         self.q_opt = torch.optim.Adam(self.qNetwork.parameters(), lr=q_lr)
         self.q_opt.zero_grad()
 
-    def get_q_value(self, observation, actions=None):
-        """
-
-        Parameters
-        ----------
-        observation: torch.Tensor
-            Agent observations. Should have shape (batch_size, observation_size)
-        actions: torch.Tensor, optional (default = False)
-            Will provide the Q values corresponding to the provided actions.
-            actions should have shape (batch_size, 1)
-            If no actions are provided, the Q value will correspond to the maximal value
-        Returns
-        -------
-        max_q: torch.Tensor
-            Tensor containing all Q values. Has shape (batch_size, 1)
-        """
-        q_values = self.qNetwork(observation)
-        if torch.is_tensor(actions):
-            indices = torch.stack(
-                [torch.tensor(self.action_space) == act for act in actions]
-            )
-            max_q = q_values[indices]
-        else:
-            max_q, _ = torch.max(q_values, dim=1)
-        return max_q
-
     def get_action(self, observation, epsilon=0.05):
         """
         Parameters
@@ -172,6 +155,32 @@ class DQNAgent(AgentSetting):
         action_price = self.action_space[idx]
         return torch.Tensor([action_price])
 
+    def get_q_value(self, observation, actions=None):
+        """
+
+        Parameters
+        ----------
+        observation: torch.Tensor
+            Agent observations. Should have shape (batch_size, observation_size)
+        actions: torch.Tensor, optional (default = False)
+            Will provide the Q values corresponding to the provided actions.
+            actions should have shape (batch_size, 1)
+            If no actions are provided, the Q value will correspond to the maximal value
+        Returns
+        -------
+        max_q: torch.Tensor
+            Tensor containing all Q values. Has shape (batch_size, 1)
+        """
+        q_values = self.qNetwork(observation)
+        if torch.is_tensor(actions):
+            indices = torch.stack(
+                [torch.tensor(self.action_space) == act for act in actions]
+            )
+            max_q = q_values[indices]
+        else:
+            max_q, _ = torch.max(q_values, dim=1)
+        return max_q
+
     def get_target(self, observation, agent_state=None):
         """
 
@@ -202,3 +211,37 @@ class DQNAgent(AgentSetting):
         res = torch.mul(max_q, ~agent_state) + torch.mul(no_act, agent_state)
 
         return res.unsqueeze(0).transpose(0, 1)
+
+
+class ConstAgent(AgentSetting):
+    def __init__(self, role, reservation, in_features, action_boundary, **kwargs):
+        super(ConstAgent, self).__init__(
+            role, reservation, in_features, action_boundary
+        )
+
+        self.const_price = kwargs.pop(
+            "const_price", (reservation + action_boundary) // 2.0
+        )
+        self.q_opt = self.Optimizer()
+
+    def get_action(self, observation, epsilon=0.05):
+        return torch.Tensor([self.const_price])
+
+    def get_target(self, observation, agent_state=None):
+        return torch.zeros((observation.shape[0])).unsqueeze(1)
+
+    def get_q_value(self, observation, actions=None):
+        return torch.zeros((observation.shape[0]))
+
+    def reset_target_network(self):
+        pass
+
+    class Optimizer:
+        def __init__(self):
+            pass
+
+        def step(self):
+            pass
+
+        def zero_grad(self):
+            pass
