@@ -25,6 +25,7 @@ class ReplayBuffer(TianshouRBuffer):
             sample_avail=sample_avail,
             **kwargs,
         )
+        self._reserved_keys = ("obs", "act", "rew", "done", "obs_next", "a_states")
 
     # Overwrite the add attribute to allow for rewards of type torch.Tensor
     def add(
@@ -74,3 +75,34 @@ class ReplayBuffer(TianshouRBuffer):
                 _alloc_by_keys_diff(self._meta, batch, self.maxsize, stack)
             self._meta[ptr] = batch
         return ptr, ep_rew, ep_len, ep_idx
+
+    # Overwrite the __getitem__ attribute to allow for sampling of a_states keyword.
+    def __getitem__(self, index: Union[slice, int, List[int], np.ndarray]) -> Batch:
+        """Return a data batch: self[index].
+        If stack_num is larger than 1, return the stacked obs and obs_next with shape
+        (batch, len, ...).
+        """
+        if isinstance(index, slice):  # change slice to np array
+            # buffer[:] will get all available data
+            indice = (
+                self.sample_index(0)
+                if index == slice(None)
+                else self._indices[: len(self)][index]
+            )
+        else:
+            indice = index
+        # raise KeyError first instead of AttributeError,
+        # to support np.array([ReplayBuffer()])
+        obs = self.get(indice, "obs")
+        if self._save_obs_next:
+            obs_next = self.get(indice, "obs_next", Batch())
+        else:
+            obs_next = self.get(self.next(indice), "obs", Batch())
+        return Batch(
+            obs=obs,
+            act=self.act[indice],
+            rew=self.rew[indice],
+            done=self.done[indice],
+            obs_next=obs_next,
+            a_states=self.a_states[indice],
+        )
