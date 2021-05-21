@@ -77,11 +77,13 @@ class DeepQTrainer:
         discount=0.99,
         max_loss_history=None,
         max_reward_history=None,
+        max_action_history=None,
     ):
         self.discount = discount
         self.update_frq = update_frq
         self.avg_loss_history = deque(maxlen=max_loss_history)
         self.avg_reward_history = deque(maxlen=max_reward_history)
+        self.last_actions = deque(maxlen=max_action_history)
         self.env = env
         self.env.reset()
 
@@ -102,7 +104,7 @@ class DeepQTrainer:
         y_target = q_targets.mean(dim=0)
         prediction = q_values.mean(dim=0)
 
-        loss = torch.clamp(torch.sub(y_target, prediction), -1.0, 1.0).square()
+        loss = torch.clamp(torch.sub(y_target, prediction), -4.0, 4.0).square()
         return loss
 
     def set_replay_buffer(self, memory_size, replay_start_size):
@@ -133,6 +135,7 @@ class DeepQTrainer:
                 a_states=a_states,
             )
             buffer.add(history_batch)
+            self.env.reset()
         return buffer
 
     def generate_Q_targets(
@@ -217,6 +220,7 @@ class DeepQTrainer:
                     a_states=a_states,
                 )
                 self.buffer.add(history_batch)
+                self.last_actions.append(act)
 
                 # Sample a random minibatch of transitions from the replay buffer
                 batch_data, indice = self.buffer.sample(batch_size=batch_size)
@@ -255,4 +259,8 @@ class DeepQTrainer:
                 # print("Updating target Network")
                 for agent in self.env.all_agents:
                     agent.reset_target_network()
-        return self.avg_loss_history, self.avg_reward_history
+        return (
+            list(self.avg_loss_history),
+            list(self.avg_reward_history),
+            list(self.last_actions),
+        )
