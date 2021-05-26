@@ -11,60 +11,6 @@ from marl_env.replay_buffer import ReplayBuffer
 from marl_env.loss_setting import SimpleLossSetting
 
 
-class MeanAbsErrorTrainer:
-    torch.autograd.set_detect_anomaly(True)
-
-    def __init__(self, env, training_steps=5, learning_rate=0.5):
-        self.env = env
-        self.training_steps = training_steps
-        self.learning_rate = learning_rate
-        self.loss = SimpleLossSetting()
-        self.env.reset()
-        self.setup()
-
-    def setup(self):
-        self.optimizers = [
-            torch.optim.Adam(agent.model.parameters(), lr=self.learning_rate)
-            for agent in self.env.all_agents
-        ]
-        # Set all initial gradients to zero. Is this really needed?
-        for optimizer in self.optimizers:
-            optimizer.zero_grad()
-
-    def train(self):
-        loss_matrix = np.zeros(
-            (self.env.n_environments, self.env.n_agents, self.training_steps)
-        )
-        for t_step in tqdm(range(self.training_steps)):
-            obs, act, rew, _, _ = self.env.step()
-            s_rew, b_rew = torch.split(
-                rew, [self.env.n_sellers, self.env.n_buyers], dim=1
-            )
-            tot_loss = self.loss.get_losses(self.env, s_rew, b_rew)
-            tot_loss.backward(torch.ones_like(tot_loss))
-
-            for agent in range(self.env.n_agents):
-                old_params = {}
-                for name, param in enumerate(
-                    self.env.all_agents[agent].model.parameters()
-                ):
-                    old_params[name] = param.clone()
-                self.optimizers[agent].step()  # parameter update
-                # if list(self.env.all_agents[0].model.parameters())[0].grad.data > 0:
-                #     print("Step: ", t_step, " Agent: ", agent, " after step True")
-                #     print(list(self.env.all_agents[0].model.parameters())[0].grad)
-                # for name, param in enumerate(self.env.all_agents[agent].model.parameters()):
-                #     if not (old_params[name] == param):
-                #         print("Performed parameter update for step:", t_step, "and agent: ", agent)
-                self.optimizers[agent].zero_grad()
-                # print("Step: ", t_step, " Agent: ", agent, " after reset")
-                # print(list(self.env.all_agents[0].model.parameters())[0].grad)
-
-            loss_matrix[:, :, t_step] = tot_loss.detach().numpy()
-
-        return loss_matrix
-
-
 class DeepQTrainer:
     torch.autograd.set_detect_anomaly(True)
 
@@ -73,20 +19,52 @@ class DeepQTrainer:
         env,
         memory_size,
         replay_start_size,
-        update_frq=100,
-        discount=0.99,
-        max_loss_history=None,
-        max_reward_history=None,
-        max_action_history=None,
+        **kwargs,
     ):
-        self.discount = discount
-        self.update_frq = update_frq
+        """
+
+        Parameters
+        ----------
+        env: Environment object
+            The current environment class object.
+        memory_size: int
+            ReplayBuffer size
+        replay_start_size: int
+            Number of ReplayBuffer slots to be initialised with a uniform random policy before learning starts
+        kwargs: Optional keyword arguments
+            discount: float, optional (default=0.99)
+                Multiplicative discount factor for Q-learning update
+            update_frq: int, optional (default=100)
+                Frequency (measured in episode counts) with which the target network is updated
+            max_loss_history: int, optional (default=None)
+                Number of previous episodes for which the loss will be saved for monitoring
+                None --> All episode losses are saved
+            max_reward_history: int, optional (default=None)
+                Number of previous episodes for which the rewards will be saved for monitoring
+                None --> All episode rewards are saved
+            max_action_history: int, optional (default=None)
+                Number of previous episodes for which the actions will be saved for monitoring
+                None --> All episode actions are saved
+            loss_min: int, optional (default=-5)
+                Lower-bound for the loss to be clamped to
+            loss_max: int, optional (default=5)
+                Upper-bound for the loss to be clamped to
+        """
+        self.env = env
+        self.discount = kwargs.pop('discount', 0.99)
+        self.update_frq = kwargs.pop('update_frq', 100)
+        max_loss_history = kwargs.pop('max_loss_history', None)
+        max_reward_history = kwargs.pop('max_reward_history', None)
+        max_action_history = kwargs.pop('max_action_history', None)
+        self.clamp_min = kwargs.pop('loss_min', -5)
+        self.clamp_max = kwargs.pop('loss_max', 5)
         self.avg_loss_history = deque(maxlen=max_loss_history)
         self.avg_reward_history = deque(maxlen=max_reward_history)
         self.last_actions = deque(maxlen=max_action_history)
-        self.env = env
-        self.env.reset()
 
+        assert self.clamp_min < self.clamp_max, "loss_min must be strictly smaller then loss_max"
+
+        self.env.reset()
         self.buffer = self.set_replay_buffer(memory_size, replay_start_size)
 
     @staticmethod
@@ -99,12 +77,11 @@ class DeepQTrainer:
         q_values = agent.get_q_value(observations, actions=actions)
         return q_values
 
-    @staticmethod
-    def mse_loss(q_targets, q_values):
+    def mse_loss(self, q_targets, q_values):
         y_target = q_targets.mean(dim=0)
         prediction = q_values.mean(dim=0)
 
-        loss = torch.clamp(torch.sub(y_target, prediction), -4.0, 4.0).square()
+        loss = torch.clamp(torch.sub(y_target, prediction), self.clamp_min, self.clamp_max).square()
         return loss
 
     def set_replay_buffer(self, memory_size, replay_start_size):
@@ -142,7 +119,7 @@ class DeepQTrainer:
         self, obs_next, reward, agent_state, end_of_eps, discount=0.99
     ):
         """
-
+        Generates the Q-value targets used to update the agent QNetwork
         Parameters
         ----------
         obs_next: torch.Tensor
@@ -205,6 +182,22 @@ class DeepQTrainer:
         return q_values
 
     def train(self, n_episodes, batch_size):
+        """
+
+        Parameters
+        ----------
+        n_episodes: int
+            Number of episodes (games) to train for
+        batch_size: int
+            Batch size used to update the agents network weights
+
+        Returns
+        -------
+        list
+            list[0]: Average loss history
+            list[1]: Average reward history
+            list[2]: Action history
+        """
         for eps in range(n_episodes):
             self.env.reset()
             eps_loss = deque(maxlen=self.env.market.max_steps)

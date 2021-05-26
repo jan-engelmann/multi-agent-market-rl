@@ -12,8 +12,8 @@ class InformationSetting:
 
     Attributes
     ----------
-    market: MarketEngine object
-            The current market object.
+    env: Environment object
+            The current environment class object.
     """
 
     def __init__(self, env):
