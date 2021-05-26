@@ -146,6 +146,9 @@ class MultiAgentEnvironment:
         self.s_reservations = torch.Tensor(reservations["sellers"])
         self.b_reservations = torch.Tensor(reservations["buyers"])
 
+        self.done_sellers = torch.full((self.n_sellers,), False, dtype=torch.bool)
+        self.done_buyers = torch.full((self.n_buyers,), False, dtype=torch.bool)
+
         agent_dict["sellers"]["action_boundary"] = max(reservations["buyers"])
         agent_dict["buyers"]["action_boundary"] = min(reservations["sellers"])
 
@@ -171,7 +174,7 @@ class MultiAgentEnvironment:
 
         if isinstance(info_setting, str):
             self.info_setting = getattr(inf_setting, info_setting)(
-                self.market, **kwargs.pop("info_settings", {})
+                self, **kwargs.pop("info_settings", {})
             )
             input_shape = tuple(self.info_setting.get_states()[0, :].size())[-1]
         else:
