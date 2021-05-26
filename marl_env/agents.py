@@ -32,14 +32,18 @@ class AgentSetting:
         #     The lowest possible action is given by the reservation price of a seller guaranteeing a minimal profit
         #     of 0.5 in case a deal is reached.
         if role == "buyer":
-            assert action_boundary < (reservation + 1), "Reservation price of buyer is <= the smallest reservation " \
-                                                        "price of all sellers. This results in an empty action space." \
-                                                        "Are you sure you wanted to make a buyer?"
+            assert action_boundary < (reservation + 1), (
+                "Reservation price of buyer is <= the smallest reservation "
+                "price of all sellers. This results in an empty action space."
+                "Are you sure you wanted to make a buyer?"
+            )
             self.action_space = np.arange(action_boundary, reservation + 1)
         else:
-            assert reservation < (action_boundary + 1), "Reservation price of seller is >= the largest reservation " \
-                                                        "price of all buyers. This results in an empty action space." \
-                                                        "Are you sure you wanted to make a seller?"
+            assert reservation < (action_boundary + 1), (
+                "Reservation price of seller is >= the largest reservation "
+                "price of all buyers. This results in an empty action space."
+                "Are you sure you wanted to make a seller?"
+            )
             self.action_space = np.arange(reservation, action_boundary + 1)
 
     def get_action(self, observation, epsilon=0.05):
@@ -244,10 +248,12 @@ class ConstAgent(AgentSetting):
         # Print optional agent settings
         print(f"-- const_price: {self.const_price}")
 
-        assert self.const_price in self.action_space, f"The chosen constant price {self.const_price} is not included " \
-                                                      f"in the action space! Possible integer constant prices must " \
-                                                      f"be in the interval " \
-                                                      f"[{self.action_space.min()}, {self.action_space.max()}]"
+        assert self.const_price in self.action_space, (
+            f"The chosen constant price {self.const_price} is not included "
+            f"in the action space! Possible integer constant prices must "
+            f"be in the interval "
+            f"[{self.action_space.min()}, {self.action_space.max()}]"
+        )
         self.q_opt = self.Optimizer()
         print("")
 
@@ -279,6 +285,7 @@ class ConstAgent(AgentSetting):
         """
         Dummy optimizer
         """
+
         def __init__(self):
             pass
 
@@ -325,15 +332,18 @@ class HumanReplayAgent(AgentSetting):
         tmp = data.loc[(data["treatment"] == treatment) & (data["id"] == player_id)][
             "side"
         ].tolist()
-        assert [x.lower() for x in tmp] == len(tmp) * [role], "Role from data set does not match with the role from " \
-                                                              "the agent dict"
+        assert [x.lower() for x in tmp] == len(tmp) * [role], (
+            "Role from data set does not match with the role from " "the agent dict"
+        )
 
         self.action_list = data.loc[
             (data["treatment"] == treatment) & (data["id"] == player_id)
         ]["bid"].tolist()
-        assert len(self.action_list) != 0, "Action list is empty --> Probably the chosen HumanReplayAgent does not " \
-                                           "exist. Double check the chosen agent configurations: 'data_type':... " \
-                                           "'treatment':..., 'id':..."
+        assert len(self.action_list) != 0, (
+            "Action list is empty --> Probably the chosen HumanReplayAgent does not "
+            "exist. Double check the chosen agent configurations: 'data_type':... "
+            "'treatment':..., 'id':..."
+        )
 
         self.q_opt = self.Optimizer()
         self.action = None
@@ -372,6 +382,7 @@ class HumanReplayAgent(AgentSetting):
         """
         Dummy optimizer
         """
+
         def __init__(self):
             pass
 
