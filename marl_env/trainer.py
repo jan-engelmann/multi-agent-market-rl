@@ -1,14 +1,10 @@
 import itertools
-import numpy as np
 
 import torch
 
-from tqdm import tqdm
 from collections import deque
 from tianshou.data import Batch
 from marl_env.replay_buffer import ReplayBuffer
-
-from marl_env.loss_setting import SimpleLossSetting
 
 
 class DeepQTrainer:
@@ -159,9 +155,9 @@ class DeepQTrainer:
         ).squeeze()
         targets = torch.mul(targets, discount)
         targets = torch.mul(
-            targets, torch.Tensor(~end_of_eps).unsqueeze(0).transpose(0, 1)
+            targets, torch.tensor(~end_of_eps, device=targets.device).unsqueeze(0).transpose(0, 1)
         )
-        targets = torch.add(targets, reward.squeeze())
+        targets = torch.add(targets, reward.squeeze().to(targets.device))
         return targets
 
     def generate_Q_values(self, obs, act):
@@ -242,8 +238,8 @@ class DeepQTrainer:
                     #         print("Old values: ", old_params[name][~bool_vec], " New values: ", param[~bool_vec])
 
                 # Monitoring features
-                eps_loss.append(loss)
-                eps_rew.append(rew)
+                eps_loss.append(loss.detach().to(torch.device('cpu')))
+                eps_rew.append(rew.detach().to(torch.device('cpu')))
             avg_loss = torch.stack(list(eps_loss), dim=0).mean(dim=0)
             avg_rew = torch.stack(list(eps_rew), dim=0).mean(dim=0)
             self.avg_loss_history.append(avg_loss)

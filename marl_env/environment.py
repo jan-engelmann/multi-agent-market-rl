@@ -27,7 +27,7 @@ def get_basic_agent_info(agent_dict):
     return n_agents, reservations
 
 
-def generate_agents(agent_dict):
+def generate_agents(agent_dict, device):
     all_agents = {"sellers": [], "buyers": []}
 
     input_shape = agent_dict.pop("input_shape")
@@ -45,6 +45,7 @@ def generate_agents(agent_dict):
                         reservation,
                         input_shape,
                         action_boundary,
+                        device=device,
                         **agent_dict[roles][key]
                     )
                 ]
@@ -131,10 +132,36 @@ class MultiAgentEnvironment:
                             'market_settings': {....},
                             'info_settings': {....},
                             'exploration_settings': {....},
-                            'reward_settings': {....}
+                            'reward_settings': {....},
+                            'devices':...
                             }
             Allowing to fine tune keyword arguments of the individual settings.
+            'device' is responsible for providing GPU support.
+            The environment is thought to run on two GPUs. One GPU for the environment and one for the
+            agent optimization. If provided should be a list of two GPU devices.
+            First device will be for the environment, second device will be for agent networks.
+            Default is CPU.
         """
+        devices = kwargs.pop('devices', ['cpu', 'cpu'])
+        assert len(devices) == 2, f"Expected two device specifications, got {devices}"
+        if any('cuda' in s for s in devices):
+            assert torch.cuda.is_available(), "Looks like CUDA is not available. If on Leonhard make sure to load " \
+                                              "GPU modules. Else use the environment with CPU (default behaviour)"
+            if len([s for s in devices if 'cuda' in s]) == 2:
+                assert torch.cuda.device_count() >= 2, "Torch only found one GPU, but you are trying to make use of " \
+                                                       "two GPUs. If on Leonhard make sure to request enough GPUs"
+                print("Environment running with full GPU support")
+            else:
+                print("Environment running with partial GPU support")
+            print(f"Environment runs on {devices[0]}, agents run on {devices[-1]}")
+            print("")
+        else:
+            print("Environment running on default CPU setting --> No GPU was found")
+            print("")
+
+        self.env_device = torch.device(devices.pop(0))
+        self.agent_device = torch.device(devices.pop(0))
+
         n_agents, reservations = get_basic_agent_info(agent_dict)
 
         self.n_sellers = n_agents["sellers"]
@@ -143,11 +170,11 @@ class MultiAgentEnvironment:
         self.max_n_deals = min(self.n_buyers, self.n_sellers)
         self.max_group_size = max(self.n_buyers, self.n_sellers)
 
-        self.s_reservations = torch.Tensor(reservations["sellers"])
-        self.b_reservations = torch.Tensor(reservations["buyers"])
+        self.s_reservations = torch.tensor(reservations["sellers"], device=self.env_device)
+        self.b_reservations = torch.tensor(reservations["buyers"], device=self.env_device)
 
-        self.done_sellers = torch.full((self.n_sellers,), False, dtype=torch.bool)
-        self.done_buyers = torch.full((self.n_buyers,), False, dtype=torch.bool)
+        self.done_sellers = torch.full((self.n_sellers,), False, dtype=torch.bool, device=self.env_device)
+        self.done_buyers = torch.full((self.n_buyers,), False, dtype=torch.bool, device=self.env_device)
 
         agent_dict["sellers"]["action_boundary"] = max(reservations["buyers"])
         agent_dict["buyers"]["action_boundary"] = min(reservations["sellers"])
@@ -156,6 +183,7 @@ class MultiAgentEnvironment:
             self.market = getattr(markets, market)(
                 n_agents["sellers"],
                 n_agents["buyers"],
+                device=self.env_device,
                 **kwargs.pop("market_settings", {})
             )
         else:
@@ -170,6 +198,9 @@ class MultiAgentEnvironment:
                 "Ups, looks like the number of buyers provided to the market does not match with the number of buyers "
                 "found in the agent dictionary"
             )
+            assert self.env_device == market.device, "Market device (CPU, GPU) does not match environment device. " \
+                                                     "Make sure to initialise the market with the device " \
+                                                     f"{self.env_device}"
             self.market = market
 
         if isinstance(info_setting, str):
@@ -186,7 +217,7 @@ class MultiAgentEnvironment:
             input_shape = tuple(self.info_setting.get_states()[0, :].size())[-1]
         agent_dict["input_shape"] = input_shape
 
-        all_agents = generate_agents(agent_dict)
+        all_agents = generate_agents(agent_dict, self.agent_device)
         self.sellers = all_agents["sellers"]
         self.buyers = all_agents["buyers"]
         self.all_agents = all_agents["sellers"] + all_agents["buyers"]
@@ -225,8 +256,8 @@ class MultiAgentEnvironment:
         self.market.reset()
 
         # Create a mask keeping track of which agent is already done in the current game.
-        self.done_sellers = torch.full((self.n_sellers,), False, dtype=torch.bool)
-        self.done_buyers = torch.full((self.n_buyers,), False, dtype=torch.bool)
+        self.done_sellers = torch.full((self.n_sellers,), False, dtype=torch.bool, device=self.env_device)
+        self.done_buyers = torch.full((self.n_buyers,), False, dtype=torch.bool, device=self.env_device)
         self.newly_finished_sellers = self.done_sellers.clone()
         self.newly_finished_buyers = self.done_buyers.clone()
 
@@ -248,6 +279,7 @@ class MultiAgentEnvironment:
                 )
             )
         ).T.squeeze()
+        res = res.to(self.env_device)
         return torch.split(res, [self.n_sellers, self.n_buyers], dim=-1)
 
     def calculate_rewards(self, deals_sellers, deals_buyers):
@@ -257,7 +289,8 @@ class MultiAgentEnvironment:
         return rewards_sellers, rewards_buyers
 
     def store_observations(self):
-        self.observations.append(self.info_setting.get_states())
+        # Store observations on CPU to save memory (does this work?)
+        self.observations.append(self.info_setting.get_states().to(torch.device('cpu')))
 
     def step(self, random_action=False):
         """
@@ -320,9 +353,9 @@ class MultiAgentEnvironment:
         self.exploration_setting.update()
 
         current_observations = self.observations[-1]
-        current_actions = torch.cat([s_actions, b_actions], dim=-1).detach()
-        current_rewards = torch.cat([rewards_sellers, rewards_buyers], dim=-1).detach()
-        agent_states = torch.cat([self.done_sellers, self.done_buyers], dim=-1).detach()
+        current_actions = torch.cat([s_actions, b_actions], dim=-1).detach().to(torch.device('cpu'))
+        current_rewards = torch.cat([rewards_sellers, rewards_buyers], dim=-1).detach().to(torch.device('cpu'))
+        agent_states = torch.cat([self.done_sellers, self.done_buyers], dim=-1).detach().to(torch.device('cpu'))
 
         # Update the mask keeping track of which agents are done in the current game.
         # This is done with the mask computed in the previous round. Since only agents who were finished since the
@@ -335,7 +368,7 @@ class MultiAgentEnvironment:
         elif self.market.time == self.market.max_steps:
             self.done = True
 
-        next_observation = self.info_setting.get_states()
+        next_observation = self.info_setting.get_states().to(torch.device('cpu'))
 
         return (
             current_observations,

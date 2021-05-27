@@ -33,8 +33,8 @@ class BlackBoxSetting(InformationSetting):
 
     """
 
-    def __init__(self, market, **kwargs):
-        super(BlackBoxSetting, self).__init__(market)
+    def __init__(self, env, **kwargs):
+        super(BlackBoxSetting, self).__init__(env)
 
     def get_states(self):
         n_agents = self.env.market.n_agents
@@ -44,7 +44,7 @@ class BlackBoxSetting(InformationSetting):
         states = (
             torch.cat([done_sellers, done_buyers], dim=-1).unsqueeze(0).transpose(0, 1)
         )
-        total_info = torch.zeros(n_agents, 1)
+        total_info = torch.zeros((n_agents, 1), device=self.env.env_device)
         total_info = torch.cat([total_info, states], dim=-1)
         if not (self.env.market.buyer_history or self.env.market.seller_history):
             return total_info
@@ -75,9 +75,9 @@ class OfferInformationSetting(InformationSetting):
 
     """
 
-    def __init__(self, market, **kwargs):
+    def __init__(self, env, **kwargs):
         self.n_offers = kwargs.pop("n_offers", 1)
-        super(OfferInformationSetting, self).__init__(market)
+        super(OfferInformationSetting, self).__init__(env)
 
     def get_states(self):
         assert self.n_offers <= self.env.market.n_buyers
@@ -90,7 +90,7 @@ class OfferInformationSetting(InformationSetting):
         states = (
             torch.cat([done_sellers, done_buyers], dim=-1).unsqueeze(0).transpose(0, 1)
         )
-        total_info = torch.zeros(n_agents, 2, n)
+        total_info = torch.zeros((n_agents, 2, n), device=self.env.env_device)
         if not (self.env.market.buyer_history or self.env.market.seller_history):
             # Return total_info as tensor with shape (n_agents, n_features) where n_features == 2 * n_offers
             total_info = total_info.contiguous().view(n_agents, -1)
@@ -135,9 +135,9 @@ class DealInformationSetting(InformationSetting):
 
     """
 
-    def __init__(self, market, **kwargs):
+    def __init__(self, env, **kwargs):
         self.n_deals = kwargs.pop("n_deals", 1)
-        super(DealInformationSetting, self).__init__(market)
+        super(DealInformationSetting, self).__init__(env)
 
     def get_states(self):
         n_agents = self.env.market.n_agents
@@ -146,7 +146,7 @@ class DealInformationSetting(InformationSetting):
         states = (
             torch.cat([done_sellers, done_buyers], dim=-1).unsqueeze(0).transpose(0, 1)
         )
-        total_info = torch.zeros(n_agents, self.n_deals)
+        total_info = torch.zeros((n_agents, self.n_deals), device=self.env.env_device)
         total_info = torch.cat([total_info, states], dim=-1)
 
         if not self.env.market.deal_history:
@@ -185,24 +185,25 @@ class TimeInformationWrapper(InformationSetting):
 
     """
 
-    def __init__(self, market, **kwargs):
+    def __init__(self, env, **kwargs):
         base_setting = kwargs.pop("base_setting", "BlackBoxSetting")
 
-        if inspect.isclass(type(base_setting)):
-            self.base_setting = base_setting
+        if isinstance(base_setting, str):
+            self.base_setting = globals()[base_setting](env, **kwargs)
         else:
-            self.base_setting = locals()[base_setting](market, **kwargs)
+            assert inspect.isclass(type(base_setting))
+            self.base_setting = base_setting
 
     def get_states(self):
-        n_agents = self.env.market.n_agents
-        base_obs = self.base_setting.get_states(self.env.market)
+        n_agents = self.base_setting.env.market.n_agents
+        base_obs = self.base_setting.get_states()
 
         # We want zero to indicate the initial state of the market and 1 to indicate the end state of the market.
-        normalized_time = self.env.market.time / self.env.market.max_steps
+        normalized_time = self.base_setting.env.market.time / self.base_setting.env.market.max_steps
         # TODO: put this together with environment time constraints
         assert normalized_time <= 1  # otherwise time constraint violated
 
-        time_info = torch.full((n_agents, 1), normalized_time)
+        time_info = torch.full((n_agents, 1), normalized_time, device=self.base_setting.env.env_device)
         total_info = torch.cat((base_obs, time_info), -1).clone().detach()
 
         # Return total_info with one added feature representing the current normalized market time.

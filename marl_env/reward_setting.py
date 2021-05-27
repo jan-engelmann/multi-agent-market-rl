@@ -36,7 +36,7 @@ class NoDealPenaltyReward(RewardSetting):
     def buyer_reward(self, buyer_deals):
         done_buyers = self.env.done_buyers + self.env.newly_finished_buyers
         no_deal_penalty = -(
-            1 + torch.max(torch.Tensor([self.env.market.time - self.no_deal_max, -1]))
+            1 + torch.max(torch.tensor([self.env.market.time - self.no_deal_max, -1], device=self.env.env_device))
         )
         no_deal_penalty = torch.mul(no_deal_penalty, ~done_buyers)
 

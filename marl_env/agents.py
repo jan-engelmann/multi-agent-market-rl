@@ -1,5 +1,4 @@
 import torch
-import numpy as np
 import pandas as pd
 
 
@@ -9,12 +8,13 @@ class AgentSetting:
 
     """
 
-    def __init__(self, role, reservation, in_features, action_boundary) -> None:
+    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu')) -> None:
         assert role in ["buyer", "seller"], "role should be 'buyer' or 'seller'"
         assert reservation > 0, "reservation price needs to be larger then zero"
         self.role = role
         self.reservation = reservation
         self.in_features = in_features
+        self.device = device
 
         # Print role and reservation price of the agent being initialised
         print(f"-- role: {role}")
@@ -37,14 +37,14 @@ class AgentSetting:
                 "price of all sellers. This results in an empty action space."
                 "Are you sure you wanted to make a buyer?"
             )
-            self.action_space = np.arange(action_boundary, reservation + 1)
+            self.action_space = torch.arange(action_boundary, reservation + 1, device=self.device)
         else:
             assert reservation < (action_boundary + 1), (
                 "Reservation price of seller is >= the largest reservation "
                 "price of all buyers. This results in an empty action space."
                 "Are you sure you wanted to make a seller?"
             )
-            self.action_space = np.arange(reservation, action_boundary + 1)
+            self.action_space = torch.arange(reservation, action_boundary + 1, device=self.device)
 
     def get_action(self, observation, epsilon=0.05):
         raise NotImplementedError
@@ -64,7 +64,7 @@ class AgentSetting:
 
 class DQNAgent(AgentSetting):
     def __init__(
-        self, role, reservation, in_features, action_boundary, **kwargs
+        self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs
     ) -> None:
         """
         Agents are implemented in such a manner, that asking and bidding prices are given as integer values. Therefore
@@ -89,7 +89,7 @@ class DQNAgent(AgentSetting):
                 Learning rate provided to the Q-Network optimizer
         """
         print("Initialising DQNAgent")
-        super(DQNAgent, self).__init__(role, reservation, in_features, action_boundary)
+        super(DQNAgent, self).__init__(role, reservation, in_features, action_boundary, device=device)
 
         self.qNetwork = None
         self.targetNetwork = None
@@ -110,7 +110,7 @@ class DQNAgent(AgentSetting):
 
     def set_q_network(self, in_features, out_features):
         # in_features is determined by the info_setting --> How many features does the agent see.
-        # out_features is determined by the discretisation_setting --> Number of legal actions including No action.
+        # out_features is determined by the action space --> Number of legal actions including No action.
         self.qNetwork = torch.nn.Sequential(
             torch.nn.Linear(in_features, 64),
             torch.nn.ReLU(),
@@ -118,10 +118,11 @@ class DQNAgent(AgentSetting):
             torch.nn.ReLU(),
             torch.nn.Linear(64, out_features),
         )
+        self.qNetwork = self.qNetwork.to(self.device)
 
     def set_target_network(self, in_features, out_features):
         # in_features is determined by the info_setting --> How many features does the agent see.
-        # out_features is determined by the discretisation_setting --> Number of legal actions including No action.
+        # out_features is determined by the action space --> Number of legal actions including No action.
         self.targetNetwork = torch.nn.Sequential(
             torch.nn.Linear(in_features, 64),
             torch.nn.ReLU(),
@@ -129,11 +130,14 @@ class DQNAgent(AgentSetting):
             torch.nn.ReLU(),
             torch.nn.Linear(64, out_features),
         )
+        self.targetNetwork = self.targetNetwork.to(self.device)
 
     def reset_target_network(self):
+        # Make sure that the targetNetwork is still on the correct device
         self.targetNetwork.load_state_dict(self.qNetwork.state_dict())
 
     def set_optimizers(self, q_lr):
+        # Optimizer should live on the same device as qNetwork dies.
         self.q_opt = torch.optim.Adam(self.qNetwork.parameters(), lr=q_lr)
         self.q_opt.zero_grad()
 
@@ -153,10 +157,11 @@ class DQNAgent(AgentSetting):
         if torch.bernoulli(torch.Tensor([epsilon])):
             idx = torch.randint(len(self.action_space), (1,))
         else:
-            q_values = self.qNetwork(observation).squeeze()
-            idx = torch.argmax(q_values)
+            obs = observation.to(self.device)
+            q_values = self.qNetwork(obs).squeeze()
+            idx = torch.argmax(q_values).unsqueeze(0)
         action_price = self.action_space[idx]
-        return torch.Tensor([action_price])
+        return action_price
 
     def random_action(self, observation=None, epsilon=None):
         """
@@ -174,7 +179,7 @@ class DQNAgent(AgentSetting):
         """
         idx = torch.randint(len(self.action_space), (1,))
         action_price = self.action_space[idx]
-        return torch.Tensor([action_price])
+        return action_price
 
     def get_q_value(self, observation, actions=None):
         """
@@ -192,10 +197,12 @@ class DQNAgent(AgentSetting):
         max_q: torch.Tensor
             Tensor containing all Q values. Has shape (batch_size, 1)
         """
-        q_values = self.qNetwork(observation).squeeze()
-        if torch.is_tensor(actions):
+        obs = observation.to(self.device)
+        acts = actions.to(self.device)
+        q_values = self.qNetwork(obs).squeeze()
+        if torch.is_tensor(acts):
             indices = torch.stack(
-                [torch.tensor(self.action_space) == act for act in actions]
+                [self.action_space == act for act in acts]
             )
             max_q = q_values[indices]
         else:
@@ -214,7 +221,8 @@ class DQNAgent(AgentSetting):
         -------
 
         """
-        q_values = self.targetNetwork(observation).squeeze()
+        obs = observation.to(self.device)
+        q_values = self.targetNetwork(obs).squeeze()
         max_q, _ = torch.max(q_values, dim=1)
 
         # Get Q-values corresponding to 'no action'
@@ -226,6 +234,7 @@ class DQNAgent(AgentSetting):
         if not torch.is_tensor(agent_state):
             agent_state = torch.full_like(max_q, False, dtype=torch.bool)
         else:
+            agent_state = agent_state.to(self.device)
             agent_state = agent_state.transpose(0, 1).squeeze()
 
         # Mask samples where the agent was done since the previous round with the Q-value of 'no action'
@@ -235,10 +244,12 @@ class DQNAgent(AgentSetting):
 
 
 class ConstAgent(AgentSetting):
-    def __init__(self, role, reservation, in_features, action_boundary, **kwargs):
+    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs):
         print("Initialising ConstAgent")
+        # ConstantAgent has no need for GPU
+        device = torch.device('cpu')
         super(ConstAgent, self).__init__(
-            role, reservation, in_features, action_boundary
+            role, reservation, in_features, action_boundary, device=device
         )
 
         self.const_price = kwargs.pop(
@@ -254,6 +265,7 @@ class ConstAgent(AgentSetting):
             f"be in the interval "
             f"[{self.action_space.min()}, {self.action_space.max()}]"
         )
+        self.const_price = torch.tensor([self.const_price], device=self.device)
         self.q_opt = self.Optimizer()
         print("")
 
@@ -264,19 +276,19 @@ class ConstAgent(AgentSetting):
         -------
         torch.Tensor of shape (1,) containing the action price of the agent
         """
-        return torch.Tensor([self.const_price])
+        return self.const_price
 
     def get_target(self, observation, agent_state=None):
         """
         Dummy function --> ConstAgent is a zero intelligence agent
         """
-        return torch.zeros((observation.shape[0])).unsqueeze(1)
+        return torch.zeros((observation.shape[0]), device=self.device).unsqueeze(1)
 
     def get_q_value(self, observation, actions=None):
         """
         Dummy function --> ConstAgent is a zero intelligence agent
         """
-        return torch.zeros((observation.shape[0]))
+        return torch.zeros((observation.shape[0]), device=self.device)
 
     def reset_target_network(self):
         pass
@@ -297,10 +309,12 @@ class ConstAgent(AgentSetting):
 
 
 class HumanReplayAgent(AgentSetting):
-    def __init__(self, role, reservation, in_features, action_boundary, **kwargs):
+    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs):
         print("Initialising HumanReplayAgent")
+        # HumanReplayAgent has no need for GPU
+        device = torch.device('cpu')
         super(HumanReplayAgent, self).__init__(
-            role, reservation, in_features, action_boundary
+            role, reservation, in_features, action_boundary, device=device
         )
         data_type = kwargs.pop("data_type", "new_data")
         treatment = kwargs.pop("treatment", "FullLimS")
@@ -347,6 +361,7 @@ class HumanReplayAgent(AgentSetting):
 
         self.q_opt = self.Optimizer()
         self.action = None
+        self.step = 0
         print("")
 
     def get_action(self, observation, epsilon=0.05):
@@ -357,23 +372,31 @@ class HumanReplayAgent(AgentSetting):
         -------
         torch.Tensor of shape (1,) containing the bid price of the agent
         """
-        try:
-            self.action = self.action_list.pop(0)
-        except IndexError:
-            pass
-        return torch.Tensor([self.action])
+        if torch.bernoulli(torch.Tensor([epsilon])) and len(self.action_list) != 0:
+            idx = torch.randint(len(self.action_list), (1,))
+        else:
+            idx = self.step % len(self.action_list)
+
+        self.action = self.action_list[idx]
+        self.step = (self.step + 1) % len(self.action_list)
+        return torch.tensor([self.action], device=self.device)
+
+    def random_action(self, observation=None, epsilon=None):
+        idx = torch.randint(len(self.action_list), (1,))
+        self.action = self.action_list[idx]
+        return torch.tensor([self.action], device=self.device)
 
     def get_target(self, observation, agent_state=None):
         """
         Dummy function --> HumanReplayAgent is a zero intelligence agent
         """
-        return torch.zeros((observation.shape[0])).unsqueeze(1)
+        return torch.zeros((observation.shape[0]), device=self.device).unsqueeze(1)
 
     def get_q_value(self, observation, actions=None):
         """
         Dummy function --> HumanReplayAgent is a zero intelligence agent
         """
-        return torch.zeros((observation.shape[0]))
+        return torch.zeros((observation.shape[0]), device=self.device)
 
     def reset_target_network(self):
         pass

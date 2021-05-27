@@ -3,7 +3,7 @@ import typing
 
 
 class BaseMarketEngine:
-    def __init__(self, n_sellers, n_buyers, **kwargs):
+    def __init__(self, n_sellers, n_buyers, device=torch.device('cpu'), **kwargs):
         self.n_sellers = n_sellers
         self.n_buyers = n_buyers
         self.n_agents = n_sellers + n_buyers
@@ -16,6 +16,8 @@ class BaseMarketEngine:
         self.buyer_history = list()
         self.seller_history = list()
         self.deal_history = list()
+
+        self.device = device
 
     def reset(self):
         """Reset the market to its initial unmatched state."""
@@ -59,8 +61,8 @@ class BaseMarketEngine:
 class MarketMatchHiLo(BaseMarketEngine):
     """ """
 
-    def __init__(self, n_sellers, n_buyers, **kwargs):
-        super(MarketMatchHiLo, self).__init__(n_sellers, n_buyers, **kwargs)
+    def __init__(self, n_sellers, n_buyers, device=torch.device('cpu'), **kwargs):
+        super(MarketMatchHiLo, self).__init__(n_sellers, n_buyers, device=device, **kwargs)
 
     def calculate_deals(self, s_actions, b_actions):
         # sort actions of sellers and buyers
@@ -69,7 +71,7 @@ class MarketMatchHiLo(BaseMarketEngine):
         b_actions_sorted, b_actions_indices = b_actions.sort(descending=True)
 
         # get mask for all deals that happen
-        bid_offer_diffs = torch.zeros(self.max_group_size)
+        bid_offer_diffs = torch.zeros(self.max_group_size, device=self.device)
         bid_offer_diffs[: self.max_n_deals] = (
             b_actions_sorted[: self.max_n_deals] - s_actions_sorted[: self.max_n_deals]
         )
@@ -87,7 +89,7 @@ class MarketMatchHiLo(BaseMarketEngine):
         )
 
         # calculating deal prices
-        sorted_deal_prices = torch.zeros(self.max_group_size)
+        sorted_deal_prices = torch.zeros(self.max_group_size, device=self.device)
         sorted_deal_prices[: self.max_n_deals] = (
             b_realized_sorted_deals[: self.max_n_deals]
             + s_realized_sorted_deals[: self.max_n_deals]
