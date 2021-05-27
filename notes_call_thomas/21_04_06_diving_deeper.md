@@ -52,3 +52,8 @@ Computational ideas:
 - Use expansion / compression of dimensions. 
 - Laplace Operator can be interessting...
 - ---> Implement in pytorch
+
+## Additional Notes
+Loenhard stuff:
+- Use module load python_gpu/3.8.5 in order to have torch 1.6.0
+- Cuda has a large memory overhead when initialising ~2GB of ram. Account for this...
