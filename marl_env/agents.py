@@ -372,18 +372,10 @@ class HumanReplayAgent(AgentSetting):
         -------
         torch.Tensor of shape (1,) containing the bid price of the agent
         """
-        if torch.bernoulli(torch.Tensor([epsilon])) and len(self.action_list) != 0:
-            idx = torch.randint(len(self.action_list), (1,))
-        else:
-            idx = self.step % len(self.action_list)
+        idx = self.step % len(self.action_list)
 
         self.action = self.action_list[idx]
         self.step = (self.step + 1) % len(self.action_list)
-        return torch.tensor([self.action], device=self.device)
-
-    def random_action(self, observation=None, epsilon=None):
-        idx = torch.randint(len(self.action_list), (1,))
-        self.action = self.action_list[idx]
         return torch.tensor([self.action], device=self.device)
 
     def get_target(self, observation, agent_state=None):
