@@ -246,8 +246,6 @@ class DQNAgent(AgentSetting):
 class ConstAgent(AgentSetting):
     def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs):
         print("Initialising ConstAgent")
-        # ConstantAgent has no need for GPU
-        device = torch.device('cpu')
         super(ConstAgent, self).__init__(
             role, reservation, in_features, action_boundary, device=device
         )
@@ -311,8 +309,6 @@ class ConstAgent(AgentSetting):
 class HumanReplayAgent(AgentSetting):
     def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs):
         print("Initialising HumanReplayAgent")
-        # HumanReplayAgent has no need for GPU
-        device = torch.device('cpu')
         super(HumanReplayAgent, self).__init__(
             role, reservation, in_features, action_boundary, device=device
         )

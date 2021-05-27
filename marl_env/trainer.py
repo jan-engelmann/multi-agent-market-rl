@@ -223,7 +223,7 @@ class DeepQTrainer:
                 ).detach()
                 q_values = self.generate_Q_values(batch_data["obs"], batch_data["act"])
                 loss = self.mse_loss(q_targets, q_values)
-                loss.backward(torch.ones(self.env.n_agents))
+                loss.backward(torch.ones((self.env.n_agents,), device=loss.device))
 
                 for agent in self.env.all_agents:
                     # old_params = {}
