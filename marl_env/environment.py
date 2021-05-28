@@ -8,11 +8,11 @@ import torch
 import inspect
 import itertools
 
-import marl_env.agents as agents
-import marl_env.markets as markets
-import marl_env.info_setting as inf_setting
-import marl_env.reward_setting as rew_setting
-import marl_env.exploration_setting as expo_setting
+import agents as agents
+import markets as markets
+import info_setting as inf_setting
+import reward_setting as rew_setting
+import exploration_setting as expo_setting
 
 
 def get_basic_agent_info(agent_dict):

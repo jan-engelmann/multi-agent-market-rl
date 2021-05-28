@@ -4,7 +4,7 @@ import torch
 
 from collections import deque
 from tianshou.data import Batch
-from marl_env.replay_buffer import ReplayBuffer
+from replay_buffer import ReplayBuffer
 
 
 class DeepQTrainer:
