@@ -1,3 +1,4 @@
+import os
 import torch
 import pandas as pd
 
@@ -61,6 +62,12 @@ class AgentSetting:
     def reset_target_network(self):
         raise NotImplementedError
 
+    def save_model_weights(self):
+        raise NotImplementedError
+
+    def load_model_weights(self):
+        raise NotImplementedError
+
 
 class DQNAgent(AgentSetting):
     def __init__(
@@ -87,6 +94,12 @@ class DQNAgent(AgentSetting):
         kwargs:
             q_lr: float, optional (default=0.001)
                 Learning rate provided to the Q-Network optimizer
+            save_weights_directory: str, optional (default="../saved_agent_weights/default_path/{self.agent_name}/")
+                Directory to where model weights will be saved to.
+            save_weights_file: str, optional (default="default_test_file.pt")
+                File name of the saved weights. Must be a .pt or .pth file
+            load_weights_path: str, optional (default=False)
+                If a path is provided, agent will try to load pretrained weights from there.
         """
         print("Initialising DQNAgent")
         super(DQNAgent, self).__init__(role, reservation, in_features, action_boundary, device=device)
@@ -94,7 +107,15 @@ class DQNAgent(AgentSetting):
         self.qNetwork = None
         self.targetNetwork = None
         self.q_opt = None
+        self.agent_name = kwargs.pop("agent_name", "Undefined_DQNAgent")
         lr = kwargs.pop("lr", 0.001)
+        default_directory = f"../saved_agent_weights/default_path/{self.agent_name}/"
+        self.save_weights_directory = kwargs.pop("save_weights_directory", default_directory)
+        self.save_weights_file = kwargs.pop("save_weights_file", "default_test_file.pt")
+        self.load_weights_path = kwargs.pop("load_weights_path", False)
+
+        assert os.path.isdir(self.save_weights_directory), "Make sure that the value for the 'save_weights_directory' "\
+                                                           "key is a valid directory path!"
 
         # Number of out_features is equal to the number of possible actions. Therefore the number of out_features is
         # given by the length of the action_space.
@@ -106,6 +127,8 @@ class DQNAgent(AgentSetting):
 
         # Print optional agent settings
         print(f"-- lr: {lr}")
+        print(f"-- save_weights_directory: {self.save_weights_directory}")
+        print(f"-- save_weights_file: {self.save_weights_file}")
         print("")
 
     def set_q_network(self, in_features, out_features):
@@ -118,6 +141,9 @@ class DQNAgent(AgentSetting):
             torch.nn.ReLU(),
             torch.nn.Linear(64, out_features),
         )
+        if self.load_weights_path:
+            print(f"-- Loading model weights from {self.load_weights_path} for agent {self.agent_name}")
+            self.load_model_weights()
         self.qNetwork = self.qNetwork.to(self.device)
 
     def set_target_network(self, in_features, out_features):
@@ -242,6 +268,14 @@ class DQNAgent(AgentSetting):
 
         return res.unsqueeze(0).transpose(0, 1)
 
+    def load_model_weights(self):
+        self.qNetwork = torch.load(self.load_weights_path)
+
+    def save_model_weights(self):
+        os.makedirs(self.save_weights_directory, exist_ok=True)
+        print(f"-- Saving model weights for {self.agent_name}")
+        torch.save(self.qNetwork.state_dict(), os.path.join(self.save_weights_directory, self.save_weights_file))
+
 
 class ConstAgent(AgentSetting):
     def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs):
@@ -253,6 +287,7 @@ class ConstAgent(AgentSetting):
         self.const_price = kwargs.pop(
             "const_price", (reservation + action_boundary) // 2.0
         )
+        self.agent_name = kwargs.pop("agent_name", "Undefined_ConstAgent")
 
         # Print optional agent settings
         print(f"-- const_price: {self.const_price}")
@@ -291,6 +326,13 @@ class ConstAgent(AgentSetting):
     def reset_target_network(self):
         pass
 
+    def load_model_weights(self):
+        pass
+
+    def save_model_weights(self):
+        print(f"-- {self.agent_name} has no model weights that can be saved... passing")
+        pass
+
     class Optimizer:
         """
         Dummy optimizer
@@ -315,6 +357,7 @@ class HumanReplayAgent(AgentSetting):
         data_type = kwargs.pop("data_type", "new_data")
         treatment = kwargs.pop("treatment", "FullLimS")
         player_id = kwargs.pop("id", 954)
+        self.agent_name = kwargs.pop("agent_name", "Undefined_HumanReplayAgent")
 
         # Make better...
         if data_type == "new_data":
@@ -362,16 +405,18 @@ class HumanReplayAgent(AgentSetting):
 
     def get_action(self, observation, epsilon=0.05):
         """
-        Returns the next bid from the data set for every market step. If all data steps have been used, the last
-        available bid from the data set will be returned.
+        Returns the next bid from the data set for every market step. If all data steps have been used, we will restart
+        from the beginning.
+
         Returns
         -------
         torch.Tensor of shape (1,) containing the bid price of the agent
         """
-        idx = self.step % len(self.action_list)
+        idx = self.step
 
         self.action = self.action_list[idx]
         self.step = (self.step + 1) % len(self.action_list)
+
         return torch.tensor([self.action], device=self.device)
 
     def get_target(self, observation, agent_state=None):
@@ -387,6 +432,13 @@ class HumanReplayAgent(AgentSetting):
         return torch.zeros((observation.shape[0]), device=self.device)
 
     def reset_target_network(self):
+        pass
+
+    def load_model_weights(self):
+        pass
+
+    def save_model_weights(self):
+        print(f"-- {self.agent_name} has no model weights that can be saved... passing")
         pass
 
     class Optimizer:
