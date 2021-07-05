@@ -114,9 +114,6 @@ class DQNAgent(AgentSetting):
         self.save_weights_file = kwargs.pop("save_weights_file", "default_test_file.pt")
         self.load_weights_path = kwargs.pop("load_weights_path", False)
 
-        assert os.path.isdir(self.save_weights_directory), "Make sure that the value for the 'save_weights_directory' "\
-                                                           "key is a valid directory path!"
-
         # Number of out_features is equal to the number of possible actions. Therefore the number of out_features is
         # given by the length of the action_space.
         out_features = len(self.action_space)
