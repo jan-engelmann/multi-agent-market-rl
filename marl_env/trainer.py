@@ -45,6 +45,8 @@ class DeepQTrainer:
                 Lower-bound for the loss to be clamped to
             loss_max: int, optional (default=5)
                 Upper-bound for the loss to be clamped to
+            save_weights: bool, optional (default=False)
+                If true, all agent weights will be saved to the respective directory specified by the agent in question
         """
         self.env = env
         self.discount = kwargs.pop('discount', 0.99)
@@ -57,6 +59,8 @@ class DeepQTrainer:
         self.avg_loss_history = deque(maxlen=max_loss_history)
         self.avg_reward_history = deque(maxlen=max_reward_history)
         self.last_actions = deque(maxlen=max_action_history)
+
+        self.save_weights = kwargs.pop('save_weights', False)
 
         assert self.clamp_min < self.clamp_max, "loss_min must be strictly smaller then loss_max"
 
@@ -248,6 +252,11 @@ class DeepQTrainer:
                 # print("Updating target Network")
                 for agent in self.env.all_agents:
                     agent.reset_target_network()
+        if self.save_weights:
+            print("Saving model weights")
+            for agent in self.env.all_agents:
+                agent.save_model_weights()
+            print("")
         return (
             list(self.avg_loss_history),
             list(self.avg_reward_history),
