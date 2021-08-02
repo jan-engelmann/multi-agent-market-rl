@@ -47,25 +47,25 @@ class AgentSetting:
             )
             self.action_space = torch.arange(reservation, action_boundary + 1, device=self.device)
 
-    def get_action(self, observation, epsilon=0.05):
+    def get_action(self, observation, epsilon=0.05) -> NotImplementedError:
         raise NotImplementedError
 
-    def random_action(self, observation=None, epsilon=None):
+    def random_action(self, observation=None, epsilon=None) -> NotImplementedError:
         raise NotImplementedError
 
-    def get_q_value(self, observation, actions=None):
+    def get_q_value(self, observation, actions=None) -> NotImplementedError:
         raise NotImplementedError
 
-    def get_target(self, observation, agent_state=None):
+    def get_target(self, observation, agent_state=None) -> NotImplementedError:
         raise NotImplementedError
 
-    def reset_target_network(self):
+    def reset_target_network(self) -> NotImplementedError:
         raise NotImplementedError
 
-    def save_model_weights(self):
+    def save_model_weights(self) -> NotImplementedError:
         raise NotImplementedError
 
-    def load_model_weights(self):
+    def load_model_weights(self) -> NotImplementedError:
         raise NotImplementedError
 
 
@@ -90,6 +90,8 @@ class DQNAgent(AgentSetting):
         action_boundary: int
             In case the agent is a seller, action_boundary should equal the largest reservation price of all buyers.
             In case the agent is a buyer, action_boundary should equal the smallest reservation price of all sellers.
+        device: torch.device, optional (default=torch.device('cpu'))
+            The device on which the agent will run (cpu or gpu)
 
         kwargs:
             q_lr: float, optional (default=0.001)
@@ -129,8 +131,20 @@ class DQNAgent(AgentSetting):
         print("")
 
     def set_q_network(self, in_features, out_features):
-        # in_features is determined by the info_setting --> How many features does the agent see.
-        # out_features is determined by the action space --> Number of legal actions including No action.
+        """
+        Initialises the Q-network
+
+        Parameters
+        ----------
+        in_features: int
+            Determined by the info_setting --> How many features does the agent see
+        out_features: int
+            Determined by the action space --> Number of legal actions including No action
+
+        Returns
+        -------
+
+        """
         self.qNetwork = torch.nn.Sequential(
             torch.nn.Linear(in_features, 64),
             torch.nn.ReLU(),
@@ -156,16 +170,37 @@ class DQNAgent(AgentSetting):
         self.targetNetwork = self.targetNetwork.to(self.device)
 
     def reset_target_network(self):
+        """
+        Initialises the target network with the state dictionary of the Q-network
+
+        Returns
+        -------
+
+        """
         # Make sure that the targetNetwork is still on the correct device
         self.targetNetwork.load_state_dict(self.qNetwork.state_dict())
 
     def set_optimizers(self, q_lr):
+        """
+        Initialises the optimizer
+
+        Parameters
+        ----------
+        q_lr: float
+            Learning rate provided to the Q-Network optimizer
+
+        Returns
+        -------
+
+        """
         # Optimizer should live on the same device as qNetwork dies.
         self.q_opt = torch.optim.Adam(self.qNetwork.parameters(), lr=q_lr)
         self.q_opt.zero_grad()
 
     def get_action(self, observation, epsilon=0.05):
         """
+        Determines the agent action
+
         Parameters
         ----------
         observation: torch.Tensor
@@ -176,6 +211,7 @@ class DQNAgent(AgentSetting):
         Returns
         -------
         action_price: int
+
         """
         if torch.bernoulli(torch.Tensor([epsilon])):
             idx = torch.randint(len(self.action_space), (1,))
@@ -192,13 +228,16 @@ class DQNAgent(AgentSetting):
 
         Parameters
         ----------
-        observation: Dummy parameter copying get_action()
-        epsilon: Dummy parameter copying get_action()
+        observation: None
+            Dummy parameter copying get_action()
+        epsilon: None
+            Dummy parameter copying get_action()
 
         Returns
         -------
         action_price: int
             Uniformly sampled action price.
+
         """
         idx = torch.randint(len(self.action_space), (1,))
         action_price = self.action_space[idx]
@@ -215,6 +254,7 @@ class DQNAgent(AgentSetting):
             Will provide the Q values corresponding to the provided actions.
             actions should have shape (batch_size, 1)
             If no actions are provided, the Q value will correspond to the maximal value
+
         Returns
         -------
         max_q: torch.Tensor
@@ -266,16 +306,44 @@ class DQNAgent(AgentSetting):
         return res.unsqueeze(0).transpose(0, 1)
 
     def load_model_weights(self):
+        """
+        Loads network weights from a given directory
+        """
         self.qNetwork = torch.load(self.load_weights_path)
 
     def save_model_weights(self):
+        """
+        Saves the model weights in a given directory using a specific file name
+        """
         os.makedirs(self.save_weights_directory, exist_ok=True)
         print(f"-- Saving model weights for {self.agent_name}")
         torch.save(self.qNetwork.state_dict(), os.path.join(self.save_weights_directory, self.save_weights_file))
 
 
 class ConstAgent(AgentSetting):
-    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs):
+    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs) -> None:
+        """
+
+        Parameters
+        ----------
+        role: str
+            role can be 'buyer' or 'seller'
+        reservation: int
+            The reservation price needs to be in the open interval of (0, infinity). In the case of a seller, the
+            reservation price denotes the fixed costs and in the case of a buyer, the reservation price denotes the
+            budget of the agent.
+        in_features: int
+            Number of features observed by the agent
+        action_boundary: int
+            In case the agent is a seller, action_boundary should equal the largest reservation price of all buyers.
+            In case the agent is a buyer, action_boundary should equal the smallest reservation price of all sellers.
+        device: torch.device, optional (default=torch.device('cpu'))
+            The device on which the agent will run (cpu or gpu)
+
+        kwargs:
+            const_price: int (default=(reservation + action_boundary)//2.0)
+                The constant asking / bidding price
+        """
         print("Initialising ConstAgent")
         super(ConstAgent, self).__init__(
             role, reservation, in_features, action_boundary, device=device
@@ -302,6 +370,7 @@ class ConstAgent(AgentSetting):
     def get_action(self, observation, epsilon=0.05):
         """
         Returns the constant action price of the agent
+
         Returns
         -------
         torch.Tensor of shape (1,) containing the action price of the agent
@@ -321,18 +390,30 @@ class ConstAgent(AgentSetting):
         return torch.zeros((observation.shape[0]), device=self.device)
 
     def reset_target_network(self):
+        """
+        Dummy network reset --> will pass
+
+        """
         pass
 
     def load_model_weights(self):
+        """
+        Dummy weight loader --> will pass
+
+        """
         pass
 
     def save_model_weights(self):
+        """
+        Dummy weight saver --> will pass
+
+        """
         print(f"-- {self.agent_name} has no model weights that can be saved... passing")
         pass
 
     class Optimizer:
         """
-        Dummy optimizer
+        Dummy optimizer --> all members will pass
         """
 
         def __init__(self):
@@ -346,7 +427,34 @@ class ConstAgent(AgentSetting):
 
 
 class HumanReplayAgent(AgentSetting):
-    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs):
+    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs) -> None:
+        """
+
+        Parameters
+        ----------
+        role: str
+            role can be 'buyer' or 'seller'
+        reservation: int
+            The reservation price needs to be in the open interval of (0, infinity). In the case of a seller, the
+            reservation price denotes the fixed costs and in the case of a buyer, the reservation price denotes the
+            budget of the agent.
+        in_features: int
+            Number of features observed by the agent
+        action_boundary: int
+            In case the agent is a seller, action_boundary should equal the largest reservation price of all buyers.
+            In case the agent is a buyer, action_boundary should equal the smallest reservation price of all sellers.
+        device: torch.device, optional (default=torch.device('cpu'))
+            The device on which the agent will run (cpu or gpu)
+
+        kwargs:
+            data_type: str, optional (default='new_data')
+                Data set used (new_data or old_data). See the git directory 'HumanReplayData'
+            treatment: str, optional (default='FullLimS')
+                Market treatment used. See https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3131004
+            id: int, optional (default=954)
+                Player id. Must match with agent 'role', 'reservation', 'data_type' and 'treatment'.
+                See the .csv files in the git directory 'HumanReplayData/data_type'
+        """
         print("Initialising HumanReplayAgent")
         super(HumanReplayAgent, self).__init__(
             role, reservation, in_features, action_boundary, device=device
@@ -383,7 +491,7 @@ class HumanReplayAgent(AgentSetting):
             "side"
         ].tolist()
         assert [x.lower() for x in tmp] == len(tmp) * [role], (
-            "Role from data set does not match with the role from " "the agent dict"
+            "Role from data set does not match with the role from the agent dict"
         )
 
         self.action_list = data.loc[
@@ -429,18 +537,30 @@ class HumanReplayAgent(AgentSetting):
         return torch.zeros((observation.shape[0]), device=self.device)
 
     def reset_target_network(self):
+        """
+        Dummy network reset --> will pass
+
+        """
         pass
 
     def load_model_weights(self):
+        """
+        Dummy weight loader --> will pass
+
+        """
         pass
 
     def save_model_weights(self):
+        """
+        Dummy weight saver --> will pass
+
+        """
         print(f"-- {self.agent_name} has no model weights that can be saved... passing")
         pass
 
     class Optimizer:
         """
-        Dummy optimizer
+        Dummy optimizer  --> all members will pass
         """
 
         def __init__(self):

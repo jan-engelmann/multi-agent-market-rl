@@ -17,6 +17,12 @@ class InformationSetting:
     """
 
     def __init__(self, env):
+        """
+
+        Parameters
+        ----------
+        env: environment class object
+        """
         self.env = env
 
     def get_states(self):
@@ -34,9 +40,27 @@ class BlackBoxSetting(InformationSetting):
     """
 
     def __init__(self, env, **kwargs):
+        """
+
+        Parameters
+        ----------
+        env: environment class object
+        kwargs:
+            Additional keyword arguments
+        """
         super(BlackBoxSetting, self).__init__(env)
 
     def get_states(self):
+        """
+
+        Returns
+        -------
+        total_info: torch.tensor
+            Return total_info as tensor with shape (n_agents, n_features) where n_features == 1
+            Observations are ordered in the same way as res in MultiAgentEnvironment.get_actions().
+            total_info[:n_sellers, :] contains all observations for the seller agents
+            total_info[n_sellers:, :] contains all observations for the buyer agents
+        """
         n_agents = self.env.market.n_agents
         n_sellers = self.env.market.n_sellers
         done_sellers = self.env.done_sellers.clone()
@@ -69,17 +93,36 @@ class OfferInformationSetting(InformationSetting):
 
     Parameters
     ----------
-    n_offers_info: int, optional (default=5)
-        Number of offers to see. For instance, 5 would mean the agents see the
-        best 5 bids and asks.
+    kwargs: dict
+        n_offers: int, optional (default=1)
+            Number of offers to see. For instance, 5 would mean the agents see the
+            best 5 bids and asks.
 
     """
 
     def __init__(self, env, **kwargs):
+        """
+
+        Parameters
+        ----------
+        env: environment class object
+        kwargs:
+            'n_offers' (int)
+        """
         self.n_offers = kwargs.pop("n_offers", 1)
         super(OfferInformationSetting, self).__init__(env)
 
     def get_states(self):
+        """
+
+        Returns
+        -------
+        total_info: torch.tensor
+            Return total_info as tensor with shape (n_agents, n_features) where n_features == 2*n_offers
+            Observations are ordered in the same way as res in MultiAgentEnvironment.get_actions().
+            total_info[:n_sellers, :] contains all observations for the seller agents
+            total_info[n_sellers:, :] contains all observations for the buyer agents
+        """
         assert self.n_offers <= self.env.market.n_buyers
         assert self.n_offers <= self.env.market.n_sellers
 
@@ -127,8 +170,9 @@ class DealInformationSetting(InformationSetting):
 
     Parameters
     ----------
-    n_deals: int, optional (default=5)
-        Number of deals to see.
+    kwargs: dict
+        n_deals: int, optional (default=1)
+            Number of deals to see.
 
     Attributes
     ----------
@@ -136,10 +180,28 @@ class DealInformationSetting(InformationSetting):
     """
 
     def __init__(self, env, **kwargs):
+        """
+
+        Parameters
+        ----------
+        env: environment class object
+        kwargs:
+            'n_deals' (int)
+        """
         self.n_deals = kwargs.pop("n_deals", 1)
         super(DealInformationSetting, self).__init__(env)
 
     def get_states(self):
+        """
+
+        Returns
+        -------
+        total_info: torch.tensor
+            Return total_info as tensor with shape (n_agents, n_features) where n_features == n_deals
+            Observations are ordered in the same way as res in MultiAgentEnvironment.get_actions().
+            total_info[:n_sellers, :] contains all observations for the seller agents
+            total_info[n_sellers:, :] contains all observations for the buyer agents
+        """
         n_agents = self.env.market.n_agents
         done_sellers = self.env.done_sellers.clone()
         done_buyers = self.env.done_buyers.clone()
@@ -177,15 +239,21 @@ class TimeInformationWrapper(InformationSetting):
 
     Parameters
     ----------
-    base_setting: InformationSetting object
-        The base information setting to add time to.
-    max_steps: int, optional (default=30)
-        This should be the same as the ``max_steps`` parameter in the market
-        engine, as it determines the maximum number of time steps there can be.
+    kwargs: dict
+        base_setting: InformationSetting object
+            The base information setting to add time to.
 
     """
 
     def __init__(self, env, **kwargs):
+        """
+
+        Parameters
+        ----------
+        env: environment class object
+        kwargs:
+            'base_setting' (str)
+        """
         base_setting = kwargs.pop("base_setting", "BlackBoxSetting")
 
         if isinstance(base_setting, str):
@@ -195,6 +263,16 @@ class TimeInformationWrapper(InformationSetting):
             self.base_setting = base_setting
 
     def get_states(self):
+        """
+
+        Returns
+        -------
+        total_info: torch.tensor
+            Return total_info as tensor with shape (n_agents, n_features) where n_features == base_features + 1
+            Observations are ordered in the same way as res in MultiAgentEnvironment.get_actions().
+            total_info[:n_sellers, :] contains all observations for the seller agents
+            total_info[n_sellers:, :] contains all observations for the buyer agents
+        """
         n_agents = self.base_setting.env.market.n_agents
         base_obs = self.base_setting.get_states()
 

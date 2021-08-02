@@ -69,15 +69,62 @@ class DeepQTrainer:
 
     @staticmethod
     def get_agent_Q_target(agent, observations, agent_state):
+        """
+        Returns all the Q-targets of the different agents
+
+        Parameters
+        ----------
+        agent: agent class instance
+        observations: torch.tensor
+            All current observations
+        agent_state: torch.tensor
+            The state (active/finished) of all agents
+
+        Returns
+        -------
+        targets: torch.tensor
+            Q-targets of all agents
+        """
         target = agent.get_target(observations, agent_state=agent_state)
         return target
 
     @staticmethod
     def get_agent_Q_values(agent, observations, actions=None):
+        """
+        Returns all the Q-values of the different agents
+
+        Parameters
+        ----------
+        agent: agent class instance
+        observations: torch.tensor
+            All current observations
+        actions: torch.tensor
+            All current actions
+
+        Returns
+        -------
+        q_values: torch.tensor
+            Q-values of all agents
+        """
         q_values = agent.get_q_value(observations, actions=actions)
         return q_values
 
     def mse_loss(self, q_targets, q_values):
+        """
+        Custom MSE-loss with clamping
+
+        Parameters
+        ----------
+        q_targets: torch.tensor
+            All the Q-value targets
+        q_values: torch.tensor
+            All the Q-values chosen by the agents
+
+        Returns
+        -------
+        loss: torch.tensor
+            The clamped mean squared error loss
+        """
         y_target = q_targets.mean(dim=0)
         prediction = q_values.mean(dim=0)
 
@@ -165,6 +212,21 @@ class DeepQTrainer:
         return targets
 
     def generate_Q_values(self, obs, act):
+        """
+        Generates the Q-values for each agent
+
+        Parameters
+        ----------
+        obs: torch.tensor
+            All current observations
+        act: torch.tensor
+            All current actions
+
+        Returns
+        -------
+        q_values: torch.tensor
+            The Q-values of the individual agents
+        """
         agent_obs_act_tuples = [
             (agent, obs_batch.transpose(0, 1), act_batch.transpose(0, 1))
             for agent, obs_batch, act_batch in zip(
@@ -183,6 +245,7 @@ class DeepQTrainer:
 
     def train(self, n_episodes, batch_size):
         """
+        Training method.
 
         Parameters
         ----------

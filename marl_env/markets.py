@@ -4,6 +4,19 @@ import typing
 
 class BaseMarketEngine:
     def __init__(self, n_sellers, n_buyers, device=torch.device('cpu'), **kwargs):
+        """
+
+        Parameters
+        ----------
+        n_sellers: int
+            Number of agent sellers
+        n_buyers: int
+            Number of agent buyers
+        device: torch.device
+            Allows to allocate the market engine to a cpu or gpu device
+        kwargs: optional
+            max_steps (default=30), max time steps of one episode/game
+        """
         self.n_sellers = n_sellers
         self.n_buyers = n_buyers
         self.n_agents = n_sellers + n_buyers
@@ -59,7 +72,9 @@ class BaseMarketEngine:
 
 
 class MarketMatchHiLo(BaseMarketEngine):
-    """ """
+    """
+    Market engine using mechanism that highest buying offer is matched with lowest selling offer
+    """
 
     def __init__(self, n_sellers, n_buyers, device=torch.device('cpu'), **kwargs):
         super(MarketMatchHiLo, self).__init__(n_sellers, n_buyers, device=device, **kwargs)

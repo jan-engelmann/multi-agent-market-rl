@@ -114,16 +114,16 @@ class MultiAgentEnvironment:
                             }
                 }
             Containing meta_info for all wanted sellers and buyers
-            Mandatory keywords are:
-                    'type': str
-                        Name of the wanted agents class object
-                    'reservation': int
-                        Reservation price for this agent
-            Optional keywords are:
-                    'multiplicity': int
-                        Multiplicity count of the agent (default=1)
-                    **kwargs:
-                        Additional keyword arguments specific to the agent type
+                Mandatory keywords are:
+                        'type': str
+                            Name of the wanted agents class object
+                        'reservation': int
+                            Reservation price for this agent
+                Optional keywords are:
+                        'multiplicity': int
+                            Multiplicity count of the agent (default=1)
+                        **kwargs:
+                            Additional keyword arguments specific to the agent type
         market: str or markets class object
         info_setting: str or info_setting class object
         exploration_setting: str or exploration_setting class object
