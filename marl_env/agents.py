@@ -2,6 +2,8 @@ import os
 import torch
 import pandas as pd
 
+import network_models as network_models
+
 
 class AgentSetting:
     """
@@ -65,9 +67,6 @@ class AgentSetting:
     def save_model_weights(self) -> NotImplementedError:
         raise NotImplementedError
 
-    def load_model_weights(self) -> NotImplementedError:
-        raise NotImplementedError
-
 
 class DQNAgent(AgentSetting):
     def __init__(
@@ -94,80 +93,44 @@ class DQNAgent(AgentSetting):
             The device on which the agent will run (cpu or gpu)
 
         kwargs:
+            network_type: str, optional (default="SimpleExampleNetwork")
+                Name of network class implemented in network_models.py
             q_lr: float, optional (default=0.001)
                 Learning rate provided to the Q-Network optimizer
             save_weights_directory: str, optional (default="../saved_agent_weights/default_path/{self.agent_name}/")
                 Directory to where model weights will be saved to.
             save_weights_file: str, optional (default="default_test_file.pt")
                 File name of the saved weights. Must be a .pt or .pth file
-            load_weights_path: str, optional (default=False)
-                If a path is provided, agent will try to load pretrained weights from there.
         """
         print("Initialising DQNAgent")
         super(DQNAgent, self).__init__(role, reservation, in_features, action_boundary, device=device)
 
-        self.qNetwork = None
-        self.targetNetwork = None
-        self.q_opt = None
+        network_type = kwargs.pop("network_type", "SimpleExampleNetwork")
         self.agent_name = kwargs.pop("agent_name", "Undefined_DQNAgent")
         lr = kwargs.pop("lr", 0.001)
         default_directory = f"../saved_agent_weights/default_path/{self.agent_name}/"
         self.save_weights_directory = kwargs.pop("save_weights_directory", default_directory)
         self.save_weights_file = kwargs.pop("save_weights_file", "default_test_file.pt")
-        self.load_weights_path = kwargs.pop("load_weights_path", False)
 
         # Number of out_features is equal to the number of possible actions. Therefore the number of out_features is
         # given by the length of the action_space.
         out_features = len(self.action_space)
-        self.set_q_network(self.in_features, out_features)
-        self.set_target_network(self.in_features, out_features)
+        network_builder = getattr(network_models, network_type)(
+            in_features, out_features, device=self.device, **kwargs
+        )
+
+        self.qNetwork = network_builder.get_network()
+        self.q_opt = torch.optim.Adam(self.qNetwork.parameters(), lr=lr)
+        self.targetNetwork = network_builder.get_network()
         self.reset_target_network()
-        self.set_optimizers(lr)
+        self.q_opt.zero_grad()
 
         # Print optional agent settings
+        print(f"-- Dealing with agent: {self.agent_name}")
         print(f"-- lr: {lr}")
         print(f"-- save_weights_directory: {self.save_weights_directory}")
         print(f"-- save_weights_file: {self.save_weights_file}")
         print("")
-
-    def set_q_network(self, in_features, out_features):
-        """
-        Initialises the Q-network
-
-        Parameters
-        ----------
-        in_features: int
-            Determined by the info_setting --> How many features does the agent see
-        out_features: int
-            Determined by the action space --> Number of legal actions including No action
-
-        Returns
-        -------
-
-        """
-        self.qNetwork = torch.nn.Sequential(
-            torch.nn.Linear(in_features, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, out_features),
-        )
-        if self.load_weights_path:
-            print(f"-- Loading model weights from {self.load_weights_path} for agent {self.agent_name}")
-            self.load_model_weights()
-        self.qNetwork = self.qNetwork.to(self.device)
-
-    def set_target_network(self, in_features, out_features):
-        # in_features is determined by the info_setting --> How many features does the agent see.
-        # out_features is determined by the action space --> Number of legal actions including No action.
-        self.targetNetwork = torch.nn.Sequential(
-            torch.nn.Linear(in_features, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, out_features),
-        )
-        self.targetNetwork = self.targetNetwork.to(self.device)
 
     def reset_target_network(self):
         """
@@ -179,23 +142,6 @@ class DQNAgent(AgentSetting):
         """
         # Make sure that the targetNetwork is still on the correct device
         self.targetNetwork.load_state_dict(self.qNetwork.state_dict())
-
-    def set_optimizers(self, q_lr):
-        """
-        Initialises the optimizer
-
-        Parameters
-        ----------
-        q_lr: float
-            Learning rate provided to the Q-Network optimizer
-
-        Returns
-        -------
-
-        """
-        # Optimizer should live on the same device as qNetwork dies.
-        self.q_opt = torch.optim.Adam(self.qNetwork.parameters(), lr=q_lr)
-        self.q_opt.zero_grad()
 
     def get_action(self, observation, epsilon=0.05):
         """
@@ -305,12 +251,6 @@ class DQNAgent(AgentSetting):
 
         return res.unsqueeze(0).transpose(0, 1)
 
-    def load_model_weights(self):
-        """
-        Loads network weights from a given directory
-        """
-        self.qNetwork = torch.load(self.load_weights_path)
-
     def save_model_weights(self):
         """
         Saves the model weights in a given directory using a specific file name
@@ -392,13 +332,6 @@ class ConstAgent(AgentSetting):
     def reset_target_network(self):
         """
         Dummy network reset --> will pass
-
-        """
-        pass
-
-    def load_model_weights(self):
-        """
-        Dummy weight loader --> will pass
 
         """
         pass
@@ -539,13 +472,6 @@ class HumanReplayAgent(AgentSetting):
     def reset_target_network(self):
         """
         Dummy network reset --> will pass
-
-        """
-        pass
-
-    def load_model_weights(self):
-        """
-        Dummy weight loader --> will pass
 
         """
         pass
