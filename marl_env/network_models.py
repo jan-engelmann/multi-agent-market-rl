@@ -4,7 +4,7 @@ import torch
 class NetworkSetting:
     """
     Abstract network setting class.
-    Used to define your custom neural networks which can be then be used by intelligent agents
+    Used to define your custom neural networks which can then be used by intelligent agents
     """
     def __init__(self, in_features, out_features, device=torch.device('cpu'), **kwargs):
         """

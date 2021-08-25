@@ -39,7 +39,7 @@ def generate_agents(agent_dict, device):
             agent_type = agent_dict[roles][key].pop("type")
             reservation = agent_dict[roles][key].pop("reservation")
             for idx in range(multi):
-                agent_dict[roles][key].update({"agent_name": agent_type + "_" + roles[:-1] + "_" + str(idx + 1)})
+                agent_dict[roles][key].update({"agent_name": f"{agent_type}_{roles[:-1]}_key={key}_multi={idx+1}"})
                 agent += [
                     getattr(agents, agent_type)(
                         roles[:-1],
