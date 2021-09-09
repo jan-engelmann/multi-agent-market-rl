@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Vanilla Policy Gradient &#8212; multi-agent-market-rl 26.7.21 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css" />
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="vanilla-policy-gradient">
+<h1><a class="toc-backref" href="#id1">Vanilla Policy Gradient</a><a class="headerlink" href="#vanilla-policy-gradient" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title">Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#vanilla-policy-gradient" id="id1">Vanilla Policy Gradient</a></p>
+<ul>
+<li><p><a class="reference internal" href="#background" id="id2">Background</a></p>
+<ul>
+<li><p><a class="reference internal" href="#quick-facts" id="id3">Quick Facts</a></p></li>
+<li><p><a class="reference internal" href="#key-equations" id="id4">Key Equations</a></p></li>
+<li><p><a class="reference internal" href="#exploration-vs-exploitation" id="id5">Exploration vs. Exploitation</a></p></li>
+<li><p><a class="reference internal" href="#pseudocode" id="id6">Pseudocode</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#documentation" id="id7">Documentation</a></p>
+<ul>
+<li><p><a class="reference internal" href="#documentation-pytorch-version" id="id8">Documentation: PyTorch Version</a></p></li>
+<li><p><a class="reference internal" href="#saved-model-contents-pytorch-version" id="id9">Saved Model Contents: PyTorch Version</a></p></li>
+<li><p><a class="reference internal" href="#documentation-tensorflow-version" id="id10">Documentation: Tensorflow Version</a></p></li>
+<li><p><a class="reference internal" href="#saved-model-contents-tensorflow-version" id="id11">Saved Model Contents: Tensorflow Version</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#references" id="id12">References</a></p>
+<ul>
+<li><p><a class="reference internal" href="#relevant-papers" id="id13">Relevant Papers</a></p></li>
+<li><p><a class="reference internal" href="#why-these-papers" id="id14">Why These Papers?</a></p></li>
+<li><p><a class="reference internal" href="#other-public-implementations" id="id15">Other Public Implementations</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="background">
+<h2><a class="toc-backref" href="#id2">Background</a><a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h2>
+<p>(Previously: <a class="reference external" href="../spinningup/rl_intro3.html">Introduction to RL, Part 3</a>)</p>
+<p>The key idea underlying policy gradients is to push up the probabilities of actions that lead to higher return, and push down the probabilities of actions that lead to lower return, until you arrive at the optimal policy.</p>
+<section id="quick-facts">
+<h3><a class="toc-backref" href="#id3">Quick Facts</a><a class="headerlink" href="#quick-facts" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>VPG is an on-policy algorithm.</p></li>
+<li><p>VPG can be used for environments with either discrete or continuous action spaces.</p></li>
+<li><p>The Spinning Up implementation of VPG supports parallelization with MPI.</p></li>
+</ul>
+</section>
+<section id="key-equations">
+<h3><a class="toc-backref" href="#id4">Key Equations</a><a class="headerlink" href="#key-equations" title="Permalink to this headline">¶</a></h3>
+<p>Let <span class="math notranslate nohighlight">\(\pi_{\theta}\)</span> denote a policy with parameters <span class="math notranslate nohighlight">\(\theta\)</span>, and <span class="math notranslate nohighlight">\(J(\pi_{\theta})\)</span> denote the expected finite-horizon undiscounted return of the policy. The gradient of <span class="math notranslate nohighlight">\(J(\pi_{\theta})\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[\nabla_{\theta} J(\pi_{\theta}) = \underE{\tau \sim \pi_{\theta}}{
+    \sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t|s_t) A^{\pi_{\theta}}(s_t,a_t)
+    },\]</div>
+<p>where <span class="math notranslate nohighlight">\(\tau\)</span> is a trajectory and <span class="math notranslate nohighlight">\(A^{\pi_{\theta}}\)</span> is the advantage function for the current policy.</p>
+<p>The policy gradient algorithm works by updating policy parameters via stochastic gradient ascent on policy performance:</p>
+<div class="math notranslate nohighlight">
+\[\theta_{k+1} = \theta_k + \alpha \nabla_{\theta} J(\pi_{\theta_k})\]</div>
+<p>Policy gradient implementations typically compute advantage function estimates based on the infinite-horizon discounted return, despite otherwise using the finite-horizon undiscounted policy gradient formula.</p>
+</section>
+<section id="exploration-vs-exploitation">
+<h3><a class="toc-backref" href="#id5">Exploration vs. Exploitation</a><a class="headerlink" href="#exploration-vs-exploitation" title="Permalink to this headline">¶</a></h3>
+<p>VPG trains a stochastic policy in an on-policy way. This means that it explores by sampling actions according to the latest version of its stochastic policy. The amount of randomness in action selection depends on both initial conditions and the training procedure. Over the course of training, the policy typically becomes progressively less random, as the update rule encourages it to exploit rewards that it has already found. This may cause the policy to get trapped in local optima.</p>
+</section>
+<section id="pseudocode">
+<h3><a class="toc-backref" href="#id6">Pseudocode</a><a class="headerlink" href="#pseudocode" title="Permalink to this headline">¶</a></h3>
+<div class="math notranslate nohighlight">
+\begin{algorithm}[H]
+    \caption{Vanilla Policy Gradient Algorithm}
+    \label{alg1}
+\begin{algorithmic}[1]
+    \STATE Input: initial policy parameters $\theta_0$, initial value function parameters $\phi_0$
+    \FOR{$k = 0,1,2,...$}
+    \STATE Collect set of trajectories ${\mathcal D}_k = \{\tau_i\}$ by running policy $\pi_k = \pi(\theta_k)$ in the environment.
+    \STATE Compute rewards-to-go $\hat{R}_t$.
+    \STATE Compute advantage estimates, $\hat{A}_t$ (using any method of advantage estimation) based on the current value function $V_{\phi_k}$.
+    \STATE Estimate policy gradient as
+        \begin{equation*}
+        \hat{g}_k = \frac{1}{|{\mathcal D}_k|} \sum_{\tau \in {\mathcal D}_k} \sum_{t=0}^T \left. \nabla_{\theta} \log\pi_{\theta}(a_t|s_t)\right|_{\theta_k} \hat{A}_t.
+        \end{equation*}
+    \STATE Compute policy update, either using standard gradient ascent,
+        \begin{equation*}
+        \theta_{k+1} = \theta_k + \alpha_k \hat{g}_k,
+        \end{equation*}
+        or via another gradient ascent algorithm like Adam.
+    \STATE Fit value function by regression on mean-squared error:
+        \begin{equation*}
+        \phi_{k+1} = \arg \min_{\phi} \frac{1}{|{\mathcal D}_k| T} \sum_{\tau \in {\mathcal D}_k} \sum_{t=0}^T\left( V_{\phi} (s_t) - \hat{R}_t \right)^2,
+        \end{equation*}
+        typically via some gradient descent algorithm.
+    \ENDFOR
+\end{algorithmic}
+\end{algorithm}</div></section>
+</section>
+<section id="documentation">
+<h2><a class="toc-backref" href="#id7">Documentation</a><a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>In what follows, we give documentation for the PyTorch and Tensorflow implementations of VPG in Spinning Up. They have nearly identical function calls and docstrings, except for details relating to model construction. However, we include both full docstrings for completeness.</p>
+</div>
+<section id="documentation-pytorch-version">
+<h3><a class="toc-backref" href="#id8">Documentation: PyTorch Version</a><a class="headerlink" href="#documentation-pytorch-version" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="saved-model-contents-pytorch-version">
+<h3><a class="toc-backref" href="#id9">Saved Model Contents: PyTorch Version</a><a class="headerlink" href="#saved-model-contents-pytorch-version" title="Permalink to this headline">¶</a></h3>
+<p>The PyTorch saved model can be loaded with <code class="docutils literal notranslate"><span class="pre">ac</span> <span class="pre">=</span> <span class="pre">torch.load('path/to/model.pt')</span></code>, yielding an actor-critic object (<code class="docutils literal notranslate"><span class="pre">ac</span></code>) that has the properties described in the docstring for <code class="docutils literal notranslate"><span class="pre">vpg_pytorch</span></code>.</p>
+<p>You can get actions from this model with</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">actions</span> <span class="o">=</span> <span class="n">ac</span><span class="o">.</span><span class="n">act</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="documentation-tensorflow-version">
+<h3><a class="toc-backref" href="#id10">Documentation: Tensorflow Version</a><a class="headerlink" href="#documentation-tensorflow-version" title="Permalink to this headline">¶</a></h3>
+</section>
+<section id="saved-model-contents-tensorflow-version">
+<h3><a class="toc-backref" href="#id11">Saved Model Contents: Tensorflow Version</a><a class="headerlink" href="#saved-model-contents-tensorflow-version" title="Permalink to this headline">¶</a></h3>
+<p>The computation graph saved by the logger includes:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 89%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Value</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">x</span></code></p></td>
+<td><p>Tensorflow placeholder for state input.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pi</span></code></p></td>
+<td><p>Samples an action from the agent, conditioned on states in <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">v</span></code></p></td>
+<td><p>Gives value estimate for states in <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<p>This saved model can be accessed either by</p>
+<ul class="simple">
+<li><p>running the trained policy with the <a class="reference external" href="../user/saving_and_loading.html#loading-and-running-trained-policies">test_policy.py</a> tool,</p></li>
+<li><p>or loading the whole saved graph into a program with <a class="reference external" href="../utils/logger.html#spinup.utils.logx.restore_tf_graph">restore_tf_graph</a>.</p></li>
+</ul>
+</section>
+</section>
+<section id="references">
+<h2><a class="toc-backref" href="#id12">References</a><a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<section id="relevant-papers">
+<h3><a class="toc-backref" href="#id13">Relevant Papers</a><a class="headerlink" href="#relevant-papers" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://papers.nips.cc/paper/1713-policy-gradient-methods-for-reinforcement-learning-with-function-approximation.pdf">Policy Gradient Methods for Reinforcement Learning with Function Approximation</a>, Sutton et al. 2000</p></li>
+<li><p><a class="reference external" href="http://joschu.net/docs/thesis.pdf">Optimizing Expectations: From Deep Reinforcement Learning to Stochastic Computation Graphs</a>, Schulman 2016(a)</p></li>
+<li><p><a class="reference external" href="https://arxiv.org/abs/1604.06778">Benchmarking Deep Reinforcement Learning for Continuous Control</a>, Duan et al. 2016</p></li>
+<li><p><a class="reference external" href="https://arxiv.org/abs/1506.02438">High Dimensional Continuous Control Using Generalized Advantage Estimation</a>, Schulman et al. 2016(b)</p></li>
+</ul>
+</section>
+<section id="why-these-papers">
+<h3><a class="toc-backref" href="#id14">Why These Papers?</a><a class="headerlink" href="#why-these-papers" title="Permalink to this headline">¶</a></h3>
+<p>Sutton 2000 is included because it is a timeless classic of reinforcement learning theory, and contains references to the earlier work which led to modern policy gradients. Schulman 2016(a) is included because Chapter 2 contains a lucid introduction to the theory of policy gradient algorithms, including pseudocode. Duan 2016 is a clear, recent benchmark paper that shows how vanilla policy gradient in the deep RL setting (eg with neural network policies and Adam as the optimizer) compares with other deep RL algorithms. Schulman 2016(b) is included because our implementation of VPG makes use of Generalized Advantage Estimation for computing the policy gradient.</p>
+</section>
+<section id="other-public-implementations">
+<h3><a class="toc-backref" href="#id15">Other Public Implementations</a><a class="headerlink" href="#other-public-implementations" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="https://github.com/rll/rllab/blob/master/rllab/algos/vpg.py">rllab</a></p></li>
+<li><p><a class="reference external" href="https://github.com/ray-project/ray/blob/master/python/ray/rllib/agents/pg">rllib (Ray)</a></p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">multi-agent-market-rl</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../MultiAgentMarketRL.html">Multi-Agent-Market-RL</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Benjamin Suter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../../_sources/submodules/spinningup-rl-tutorial/docs/algorithms/vpg.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

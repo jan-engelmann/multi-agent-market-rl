@@ -1,0 +1,563 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Key Papers in Deep RL &#8212; multi-agent-market-rl 26.7.21 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css" />
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="key-papers-in-deep-rl">
+<h1><a class="toc-backref" href="#id106">Key Papers in Deep RL</a><a class="headerlink" href="#key-papers-in-deep-rl" title="Permalink to this headline">¶</a></h1>
+<p>What follows is a list of papers in deep RL that are worth reading. This is <em>far</em> from comprehensive, but should provide a useful starting point for someone looking to do research in the field.</p>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title">Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#key-papers-in-deep-rl" id="id106">Key Papers in Deep RL</a></p>
+<ul>
+<li><p><a class="reference internal" href="#model-free-rl" id="id107">1. Model-Free RL</a></p></li>
+<li><p><a class="reference internal" href="#exploration" id="id108">2. Exploration</a></p></li>
+<li><p><a class="reference internal" href="#transfer-and-multitask-rl" id="id109">3. Transfer and Multitask RL</a></p></li>
+<li><p><a class="reference internal" href="#hierarchy" id="id110">4. Hierarchy</a></p></li>
+<li><p><a class="reference internal" href="#memory" id="id111">5. Memory</a></p></li>
+<li><p><a class="reference internal" href="#model-based-rl" id="id112">6. Model-Based RL</a></p></li>
+<li><p><a class="reference internal" href="#meta-rl" id="id113">7. Meta-RL</a></p></li>
+<li><p><a class="reference internal" href="#scaling-rl" id="id114">8. Scaling RL</a></p></li>
+<li><p><a class="reference internal" href="#rl-in-the-real-world" id="id115">9. RL in the Real World</a></p></li>
+<li><p><a class="reference internal" href="#safety" id="id116">10. Safety</a></p></li>
+<li><p><a class="reference internal" href="#imitation-learning-and-inverse-reinforcement-learning" id="id117">11. Imitation Learning and Inverse Reinforcement Learning</a></p></li>
+<li><p><a class="reference internal" href="#reproducibility-analysis-and-critique" id="id118">12. Reproducibility, Analysis, and Critique</a></p></li>
+<li><p><a class="reference internal" href="#bonus-classic-papers-in-rl-theory-or-review" id="id119">13. Bonus: Classic Papers in RL Theory or Review</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="model-free-rl">
+<h2><a class="toc-backref" href="#id107">1. Model-Free RL</a><a class="headerlink" href="#model-free-rl" title="Permalink to this headline">¶</a></h2>
+<section id="a-deep-q-learning">
+<h3>a. Deep Q-Learning<a class="headerlink" href="#a-deep-q-learning" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id1"><span class="brackets">1</span></dt>
+<dd><p><a class="reference external" href="https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf">Playing Atari with Deep Reinforcement Learning</a>, Mnih et al, 2013. <strong>Algorithm: DQN.</strong></p>
+</dd>
+<dt class="label" id="id2"><span class="brackets">2</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1507.06527">Deep Recurrent Q-Learning for Partially Observable MDPs</a>, Hausknecht and Stone, 2015. <strong>Algorithm: Deep Recurrent Q-Learning.</strong></p>
+</dd>
+<dt class="label" id="id3"><span class="brackets">3</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1511.06581">Dueling Network Architectures for Deep Reinforcement Learning</a>, Wang et al, 2015. <strong>Algorithm: Dueling DQN.</strong></p>
+</dd>
+<dt class="label" id="id4"><span class="brackets">4</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1509.06461">Deep Reinforcement Learning with Double Q-learning</a>, Hasselt et al 2015. <strong>Algorithm: Double DQN.</strong></p>
+</dd>
+<dt class="label" id="id5"><span class="brackets">5</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1511.05952">Prioritized Experience Replay</a>, Schaul et al, 2015. <strong>Algorithm: Prioritized Experience Replay (PER).</strong></p>
+</dd>
+<dt class="label" id="id6"><span class="brackets">6</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1710.02298">Rainbow: Combining Improvements in Deep Reinforcement Learning</a>, Hessel et al, 2017. <strong>Algorithm: Rainbow DQN.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="b-policy-gradients">
+<h3>b. Policy Gradients<a class="headerlink" href="#b-policy-gradients" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id7"><span class="brackets">7</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1602.01783">Asynchronous Methods for Deep Reinforcement Learning</a>, Mnih et al, 2016. <strong>Algorithm: A3C.</strong></p>
+</dd>
+<dt class="label" id="id8"><span class="brackets">8</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1502.05477">Trust Region Policy Optimization</a>, Schulman et al, 2015. <strong>Algorithm: TRPO.</strong></p>
+</dd>
+<dt class="label" id="id9"><span class="brackets">9</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1506.02438">High-Dimensional Continuous Control Using Generalized Advantage Estimation</a>, Schulman et al, 2015. <strong>Algorithm: GAE.</strong></p>
+</dd>
+<dt class="label" id="id10"><span class="brackets">10</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.06347">Proximal Policy Optimization Algorithms</a>, Schulman et al, 2017. <strong>Algorithm: PPO-Clip, PPO-Penalty.</strong></p>
+</dd>
+<dt class="label" id="id11"><span class="brackets">11</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.02286">Emergence of Locomotion Behaviours in Rich Environments</a>, Heess et al, 2017. <strong>Algorithm: PPO-Penalty.</strong></p>
+</dd>
+<dt class="label" id="id12"><span class="brackets">12</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1708.05144">Scalable trust-region method for deep reinforcement learning using Kronecker-factored approximation</a>, Wu et al, 2017. <strong>Algorithm: ACKTR.</strong></p>
+</dd>
+<dt class="label" id="id13"><span class="brackets">13</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1611.01224">Sample Efficient Actor-Critic with Experience Replay</a>, Wang et al, 2016. <strong>Algorithm: ACER.</strong></p>
+</dd>
+<dt class="label" id="id14"><span class="brackets">14</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1801.01290">Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor</a>, Haarnoja et al, 2018. <strong>Algorithm: SAC.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="c-deterministic-policy-gradients">
+<h3>c. Deterministic Policy Gradients<a class="headerlink" href="#c-deterministic-policy-gradients" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id15"><span class="brackets">15</span></dt>
+<dd><p><a class="reference external" href="http://proceedings.mlr.press/v32/silver14.pdf">Deterministic Policy Gradient Algorithms</a>, Silver et al, 2014. <strong>Algorithm: DPG.</strong></p>
+</dd>
+<dt class="label" id="id16"><span class="brackets">16</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1509.02971">Continuous Control With Deep Reinforcement Learning</a>, Lillicrap et al, 2015. <strong>Algorithm: DDPG.</strong></p>
+</dd>
+<dt class="label" id="id17"><span class="brackets">17</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1802.09477">Addressing Function Approximation Error in Actor-Critic Methods</a>, Fujimoto et al, 2018. <strong>Algorithm: TD3.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="d-distributional-rl">
+<h3>d. Distributional RL<a class="headerlink" href="#d-distributional-rl" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id18"><span class="brackets">18</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.06887">A Distributional Perspective on Reinforcement Learning</a>, Bellemare et al, 2017. <strong>Algorithm: C51.</strong></p>
+</dd>
+<dt class="label" id="id19"><span class="brackets">19</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1710.10044">Distributional Reinforcement Learning with Quantile Regression</a>, Dabney et al, 2017. <strong>Algorithm: QR-DQN.</strong></p>
+</dd>
+<dt class="label" id="id20"><span class="brackets">20</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1806.06923">Implicit Quantile Networks for Distributional Reinforcement Learning</a>, Dabney et al, 2018. <strong>Algorithm: IQN.</strong></p>
+</dd>
+<dt class="label" id="id21"><span class="brackets">21</span></dt>
+<dd><p><a class="reference external" href="https://openreview.net/forum?id=ByG_3s09KX">Dopamine: A Research Framework for Deep Reinforcement Learning</a>, Anonymous, 2018. <strong>Contribution:</strong> Introduces Dopamine, a code repository containing implementations of DQN, C51, IQN, and Rainbow. <a class="reference external" href="https://github.com/google/dopamine">Code link.</a></p>
+</dd>
+</dl>
+</section>
+<section id="e-policy-gradients-with-action-dependent-baselines">
+<h3>e. Policy Gradients with Action-Dependent Baselines<a class="headerlink" href="#e-policy-gradients-with-action-dependent-baselines" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id22"><span class="brackets">22</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1611.02247">Q-Prop: Sample-Efficient Policy Gradient with An Off-Policy Critic</a>, Gu et al, 2016. <strong>Algorithm: Q-Prop.</strong></p>
+</dd>
+<dt class="label" id="id23"><span class="brackets">23</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1710.11198">Action-depedent Control Variates for Policy Optimization via Stein’s Identity</a>, Liu et al, 2017. <strong>Algorithm: Stein Control Variates.</strong></p>
+</dd>
+<dt class="label" id="id24"><span class="brackets">24</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1802.10031">The Mirage of Action-Dependent Baselines in Reinforcement Learning</a>, Tucker et al, 2018. <strong>Contribution:</strong> interestingly, critiques and reevaluates claims from earlier papers (including Q-Prop and stein control variates) and finds important methodological errors in them.</p>
+</dd>
+</dl>
+</section>
+<section id="f-path-consistency-learning">
+<h3>f. Path-Consistency Learning<a class="headerlink" href="#f-path-consistency-learning" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id25"><span class="brackets">25</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1702.08892">Bridging the Gap Between Value and Policy Based Reinforcement Learning</a>, Nachum et al, 2017. <strong>Algorithm: PCL.</strong></p>
+</dd>
+<dt class="label" id="id26"><span class="brackets">26</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.01891">Trust-PCL: An Off-Policy Trust Region Method for Continuous Control</a>, Nachum et al, 2017. <strong>Algorithm: Trust-PCL.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="g-other-directions-for-combining-policy-learning-and-q-learning">
+<h3>g. Other Directions for Combining Policy-Learning and Q-Learning<a class="headerlink" href="#g-other-directions-for-combining-policy-learning-and-q-learning" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id27"><span class="brackets">27</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1611.01626">Combining Policy Gradient and Q-learning</a>, O’Donoghue et al, 2016. <strong>Algorithm: PGQL.</strong></p>
+</dd>
+<dt class="label" id="id28"><span class="brackets">28</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1704.04651">The Reactor: A Fast and Sample-Efficient Actor-Critic Agent for Reinforcement Learning</a>, Gruslys et al, 2017. <strong>Algorithm: Reactor.</strong></p>
+</dd>
+<dt class="label" id="id29"><span class="brackets">29</span></dt>
+<dd><p><a class="reference external" href="http://papers.nips.cc/paper/6974-interpolated-policy-gradient-merging-on-policy-and-off-policy-gradient-estimation-for-deep-reinforcement-learning">Interpolated Policy Gradient: Merging On-Policy and Off-Policy Gradient Estimation for Deep Reinforcement Learning</a>, Gu et al, 2017. <strong>Algorithm: IPG.</strong></p>
+</dd>
+<dt class="label" id="id30"><span class="brackets">30</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1704.06440">Equivalence Between Policy Gradients and Soft Q-Learning</a>, Schulman et al, 2017. <strong>Contribution:</strong> Reveals a theoretical link between these two families of RL algorithms.</p>
+</dd>
+</dl>
+</section>
+<section id="h-evolutionary-algorithms">
+<h3>h. Evolutionary Algorithms<a class="headerlink" href="#h-evolutionary-algorithms" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id31"><span class="brackets">31</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1703.03864">Evolution Strategies as a Scalable Alternative to Reinforcement Learning</a>, Salimans et al, 2017. <strong>Algorithm: ES.</strong></p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="exploration">
+<h2><a class="toc-backref" href="#id108">2. Exploration</a><a class="headerlink" href="#exploration" title="Permalink to this headline">¶</a></h2>
+<section id="a-intrinsic-motivation">
+<h3>a. Intrinsic Motivation<a class="headerlink" href="#a-intrinsic-motivation" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id32"><span class="brackets">32</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1605.09674">VIME: Variational Information Maximizing Exploration</a>, Houthooft et al, 2016. <strong>Algorithm: VIME.</strong></p>
+</dd>
+<dt class="label" id="id33"><span class="brackets">33</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1606.01868">Unifying Count-Based Exploration and Intrinsic Motivation</a>, Bellemare et al, 2016. <strong>Algorithm: CTS-based Pseudocounts.</strong></p>
+</dd>
+<dt class="label" id="id34"><span class="brackets">34</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1703.01310">Count-Based Exploration with Neural Density Models</a>, Ostrovski et al, 2017. <strong>Algorithm: PixelCNN-based Pseudocounts.</strong></p>
+</dd>
+<dt class="label" id="id35"><span class="brackets">35</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1611.04717">#Exploration: A Study of Count-Based Exploration for Deep Reinforcement Learning</a>, Tang et al, 2016. <strong>Algorithm: Hash-based Counts.</strong></p>
+</dd>
+<dt class="label" id="id36"><span class="brackets">36</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1703.01260">EX2: Exploration with Exemplar Models for Deep Reinforcement Learning</a>, Fu et al, 2017. <strong>Algorithm: EX2.</strong></p>
+</dd>
+<dt class="label" id="id37"><span class="brackets">37</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1705.05363">Curiosity-driven Exploration by Self-supervised Prediction</a>, Pathak et al, 2017. <strong>Algorithm: Intrinsic Curiosity Module (ICM).</strong></p>
+</dd>
+<dt class="label" id="id38"><span class="brackets">38</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1808.04355">Large-Scale Study of Curiosity-Driven Learning</a>, Burda et al, 2018. <strong>Contribution:</strong> Systematic analysis of how surprisal-based intrinsic motivation performs in a wide variety of environments.</p>
+</dd>
+<dt class="label" id="id39"><span class="brackets">39</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1810.12894">Exploration by Random Network Distillation</a>, Burda et al, 2018. <strong>Algorithm: RND.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="b-unsupervised-rl">
+<h3>b. Unsupervised RL<a class="headerlink" href="#b-unsupervised-rl" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id40"><span class="brackets">40</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1611.07507">Variational Intrinsic Control</a>, Gregor et al, 2016. <strong>Algorithm: VIC.</strong></p>
+</dd>
+<dt class="label" id="id41"><span class="brackets">41</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1802.06070">Diversity is All You Need: Learning Skills without a Reward Function</a>, Eysenbach et al, 2018. <strong>Algorithm: DIAYN.</strong></p>
+</dd>
+<dt class="label" id="id42"><span class="brackets">42</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1807.10299">Variational Option Discovery Algorithms</a>, Achiam et al, 2018. <strong>Algorithm: VALOR.</strong></p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="transfer-and-multitask-rl">
+<h2><a class="toc-backref" href="#id109">3. Transfer and Multitask RL</a><a class="headerlink" href="#transfer-and-multitask-rl" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id43"><span class="brackets">43</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1606.04671">Progressive Neural Networks</a>, Rusu et al, 2016. <strong>Algorithm: Progressive Networks.</strong></p>
+</dd>
+<dt class="label" id="id44"><span class="brackets">44</span></dt>
+<dd><p><a class="reference external" href="http://proceedings.mlr.press/v37/schaul15.pdf">Universal Value Function Approximators</a>, Schaul et al, 2015. <strong>Algorithm: UVFA.</strong></p>
+</dd>
+<dt class="label" id="id45"><span class="brackets">45</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1611.05397">Reinforcement Learning with Unsupervised Auxiliary Tasks</a>, Jaderberg et al, 2016. <strong>Algorithm: UNREAL.</strong></p>
+</dd>
+<dt class="label" id="id46"><span class="brackets">46</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.03300">The Intentional Unintentional Agent: Learning to Solve Many Continuous Control Tasks Simultaneously</a>, Cabi et al, 2017. <strong>Algorithm: IU Agent.</strong></p>
+</dd>
+<dt class="label" id="id47"><span class="brackets">47</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1701.08734">PathNet: Evolution Channels Gradient Descent in Super Neural Networks</a>, Fernando et al, 2017. <strong>Algorithm: PathNet.</strong></p>
+</dd>
+<dt class="label" id="id48"><span class="brackets">48</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.07907">Mutual Alignment Transfer Learning</a>, Wulfmeier et al, 2017. <strong>Algorithm: MATL.</strong></p>
+</dd>
+<dt class="label" id="id49"><span class="brackets">49</span></dt>
+<dd><p><a class="reference external" href="https://openreview.net/forum?id=rk07ZXZRb&amp;noteId=rk07ZXZRb">Learning an Embedding Space for Transferable Robot Skills</a>, Hausman et al, 2018.</p>
+</dd>
+<dt class="label" id="id50"><span class="brackets">50</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.01495">Hindsight Experience Replay</a>, Andrychowicz et al, 2017. <strong>Algorithm: Hindsight Experience Replay (HER).</strong></p>
+</dd>
+</dl>
+</section>
+<section id="hierarchy">
+<h2><a class="toc-backref" href="#id110">4. Hierarchy</a><a class="headerlink" href="#hierarchy" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id51"><span class="brackets">51</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1606.04695">Strategic Attentive Writer for Learning Macro-Actions</a>, Vezhnevets et al, 2016. <strong>Algorithm: STRAW.</strong></p>
+</dd>
+<dt class="label" id="id52"><span class="brackets">52</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1703.01161">FeUdal Networks for Hierarchical Reinforcement Learning</a>, Vezhnevets et al, 2017. <strong>Algorithm: Feudal Networks</strong></p>
+</dd>
+<dt class="label" id="id53"><span class="brackets">53</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1805.08296">Data-Efficient Hierarchical Reinforcement Learning</a>, Nachum et al, 2018. <strong>Algorithm: HIRO.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="memory">
+<h2><a class="toc-backref" href="#id111">5. Memory</a><a class="headerlink" href="#memory" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id54"><span class="brackets">54</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1606.04460">Model-Free Episodic Control</a>, Blundell et al, 2016. <strong>Algorithm: MFEC.</strong></p>
+</dd>
+<dt class="label" id="id55"><span class="brackets">55</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1703.01988">Neural Episodic Control</a>, Pritzel et al, 2017. <strong>Algorithm: NEC.</strong></p>
+</dd>
+<dt class="label" id="id56"><span class="brackets">56</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1702.08360">Neural Map: Structured Memory for Deep Reinforcement Learning</a>, Parisotto and Salakhutdinov, 2017. <strong>Algorithm: Neural Map.</strong></p>
+</dd>
+<dt class="label" id="id57"><span class="brackets">57</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1803.10760">Unsupervised Predictive Memory in a Goal-Directed Agent</a>, Wayne et al, 2018. <strong>Algorithm: MERLIN.</strong></p>
+</dd>
+<dt class="label" id="id58"><span class="brackets">58</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1806.01822">Relational Recurrent Neural Networks</a>, Santoro et al, 2018. <strong>Algorithm: RMC.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="model-based-rl">
+<h2><a class="toc-backref" href="#id112">6. Model-Based RL</a><a class="headerlink" href="#model-based-rl" title="Permalink to this headline">¶</a></h2>
+<section id="a-model-is-learned">
+<h3>a. Model is Learned<a class="headerlink" href="#a-model-is-learned" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id59"><span class="brackets">59</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.06203">Imagination-Augmented Agents for Deep Reinforcement Learning</a>, Weber et al, 2017. <strong>Algorithm: I2A.</strong></p>
+</dd>
+<dt class="label" id="id60"><span class="brackets">60</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1708.02596">Neural Network Dynamics for Model-Based Deep Reinforcement Learning with Model-Free Fine-Tuning</a>, Nagabandi et al, 2017. <strong>Algorithm: MBMF.</strong></p>
+</dd>
+<dt class="label" id="id61"><span class="brackets">61</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1803.00101">Model-Based Value Expansion for Efficient Model-Free Reinforcement Learning</a>, Feinberg et al, 2018. <strong>Algorithm: MVE.</strong></p>
+</dd>
+<dt class="label" id="id62"><span class="brackets">62</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1807.01675">Sample-Efficient Reinforcement Learning with Stochastic Ensemble Value Expansion</a>, Buckman et al, 2018. <strong>Algorithm: STEVE.</strong></p>
+</dd>
+<dt class="label" id="id63"><span class="brackets">63</span></dt>
+<dd><p><a class="reference external" href="https://openreview.net/forum?id=SJJinbWRZ&amp;noteId=SJJinbWRZ">Model-Ensemble Trust-Region Policy Optimization</a>, Kurutach et al, 2018. <strong>Algorithm: ME-TRPO.</strong></p>
+</dd>
+<dt class="label" id="id64"><span class="brackets">64</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1809.05214">Model-Based Reinforcement Learning via Meta-Policy Optimization</a>, Clavera et al, 2018. <strong>Algorithm: MB-MPO.</strong></p>
+</dd>
+<dt class="label" id="id65"><span class="brackets">65</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1809.01999">Recurrent World Models Facilitate Policy Evolution</a>, Ha and Schmidhuber, 2018.</p>
+</dd>
+</dl>
+</section>
+<section id="b-model-is-given">
+<h3>b. Model is Given<a class="headerlink" href="#b-model-is-given" title="Permalink to this headline">¶</a></h3>
+<dl class="footnote brackets">
+<dt class="label" id="id66"><span class="brackets">66</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1712.01815">Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm</a>, Silver et al, 2017. <strong>Algorithm: AlphaZero.</strong></p>
+</dd>
+<dt class="label" id="id67"><span class="brackets">67</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1705.08439">Thinking Fast and Slow with Deep Learning and Tree Search</a>, Anthony et al, 2017. <strong>Algorithm: ExIt.</strong></p>
+</dd>
+</dl>
+</section>
+</section>
+<section id="meta-rl">
+<h2><a class="toc-backref" href="#id113">7. Meta-RL</a><a class="headerlink" href="#meta-rl" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id68"><span class="brackets">68</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1611.02779">RL^2: Fast Reinforcement Learning via Slow Reinforcement Learning</a>, Duan et al, 2016. <strong>Algorithm: RL^2.</strong></p>
+</dd>
+<dt class="label" id="id69"><span class="brackets">69</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1611.05763">Learning to Reinforcement Learn</a>, Wang et al, 2016.</p>
+</dd>
+<dt class="label" id="id70"><span class="brackets">70</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1703.03400">Model-Agnostic Meta-Learning for Fast Adaptation of Deep Networks</a>, Finn et al, 2017. <strong>Algorithm: MAML.</strong></p>
+</dd>
+<dt class="label" id="id71"><span class="brackets">71</span></dt>
+<dd><p><a class="reference external" href="https://openreview.net/forum?id=B1DmUzWAW&amp;noteId=B1DmUzWAW">A Simple Neural Attentive Meta-Learner</a>, Mishra et al, 2018. <strong>Algorithm: SNAIL.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="scaling-rl">
+<h2><a class="toc-backref" href="#id114">8. Scaling RL</a><a class="headerlink" href="#scaling-rl" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id72"><span class="brackets">72</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1803.02811">Accelerated Methods for Deep Reinforcement Learning</a>, Stooke and Abbeel, 2018. <strong>Contribution:</strong> Systematic analysis of parallelization in deep RL across algorithms.</p>
+</dd>
+<dt class="label" id="id73"><span class="brackets">73</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1802.01561">IMPALA: Scalable Distributed Deep-RL with Importance Weighted Actor-Learner Architectures</a>, Espeholt et al, 2018. <strong>Algorithm: IMPALA.</strong></p>
+</dd>
+<dt class="label" id="id74"><span class="brackets">74</span></dt>
+<dd><p><a class="reference external" href="https://openreview.net/forum?id=H1Dy---0Z">Distributed Prioritized Experience Replay</a>, Horgan et al, 2018. <strong>Algorithm: Ape-X.</strong></p>
+</dd>
+<dt class="label" id="id75"><span class="brackets">75</span></dt>
+<dd><p><a class="reference external" href="https://openreview.net/forum?id=r1lyTjAqYX">Recurrent Experience Replay in Distributed Reinforcement Learning</a>, Anonymous, 2018. <strong>Algorithm: R2D2.</strong></p>
+</dd>
+<dt class="label" id="id76"><span class="brackets">76</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1712.09381">RLlib: Abstractions for Distributed Reinforcement Learning</a>, Liang et al, 2017. <strong>Contribution:</strong> A scalable library of RL algorithm implementations. <a class="reference external" href="https://ray.readthedocs.io/en/latest/rllib.html">Documentation link.</a></p>
+</dd>
+</dl>
+</section>
+<section id="rl-in-the-real-world">
+<h2><a class="toc-backref" href="#id115">9. RL in the Real World</a><a class="headerlink" href="#rl-in-the-real-world" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id77"><span class="brackets">77</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1809.07731">Benchmarking Reinforcement Learning Algorithms on Real-World Robots</a>, Mahmood et al, 2018.</p>
+</dd>
+<dt class="label" id="id78"><span class="brackets">78</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1808.00177">Learning Dexterous In-Hand Manipulation</a>, OpenAI, 2018.</p>
+</dd>
+<dt class="label" id="id79"><span class="brackets">79</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1806.10293">QT-Opt: Scalable Deep Reinforcement Learning for Vision-Based Robotic Manipulation</a>, Kalashnikov et al, 2018. <strong>Algorithm: QT-Opt.</strong></p>
+</dd>
+<dt class="label" id="id80"><span class="brackets">80</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1811.00260">Horizon: Facebook’s Open Source Applied Reinforcement Learning Platform</a>, Gauci et al, 2018.</p>
+</dd>
+</dl>
+</section>
+<section id="safety">
+<h2><a class="toc-backref" href="#id116">10. Safety</a><a class="headerlink" href="#safety" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id81"><span class="brackets">81</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1606.06565">Concrete Problems in AI Safety</a>, Amodei et al, 2016. <strong>Contribution:</strong> establishes a taxonomy of safety problems, serving as an important jumping-off point for future research. We need to solve these!</p>
+</dd>
+<dt class="label" id="id82"><span class="brackets">82</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1706.03741">Deep Reinforcement Learning From Human Preferences</a>, Christiano et al, 2017. <strong>Algorithm: LFP.</strong></p>
+</dd>
+<dt class="label" id="id83"><span class="brackets">83</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1705.10528">Constrained Policy Optimization</a>, Achiam et al, 2017. <strong>Algorithm: CPO.</strong></p>
+</dd>
+<dt class="label" id="id84"><span class="brackets">84</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1801.08757">Safe Exploration in Continuous Action Spaces</a>, Dalal et al, 2018. <strong>Algorithm: DDPG+Safety Layer.</strong></p>
+</dd>
+<dt class="label" id="id85"><span class="brackets">85</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1707.05173">Trial without Error: Towards Safe Reinforcement Learning via Human Intervention</a>, Saunders et al, 2017. <strong>Algorithm: HIRL.</strong></p>
+</dd>
+<dt class="label" id="id86"><span class="brackets">86</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1711.06782">Leave No Trace: Learning to Reset for Safe and Autonomous Reinforcement Learning</a>, Eysenbach et al, 2017. <strong>Algorithm: Leave No Trace.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="imitation-learning-and-inverse-reinforcement-learning">
+<h2><a class="toc-backref" href="#id117">11. Imitation Learning and Inverse Reinforcement Learning</a><a class="headerlink" href="#imitation-learning-and-inverse-reinforcement-learning" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id87"><span class="brackets">87</span></dt>
+<dd><p><a class="reference external" href="http://www.cs.cmu.edu/~bziebart/publications/thesis-bziebart.pdf">Modeling Purposeful Adaptive Behavior with the Principle of Maximum Causal Entropy</a>, Ziebart 2010. <strong>Contributions:</strong> Crisp formulation of maximum entropy IRL.</p>
+</dd>
+<dt class="label" id="id88"><span class="brackets">88</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1603.00448">Guided Cost Learning: Deep Inverse Optimal Control via Policy Optimization</a>, Finn et al, 2016. <strong>Algorithm: GCL.</strong></p>
+</dd>
+<dt class="label" id="id89"><span class="brackets">89</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1606.03476">Generative Adversarial Imitation Learning</a>, Ho and Ermon, 2016. <strong>Algorithm: GAIL.</strong></p>
+</dd>
+<dt class="label" id="id90"><span class="brackets">90</span></dt>
+<dd><p><a class="reference external" href="https://xbpeng.github.io/projects/DeepMimic/2018_TOG_DeepMimic.pdf">DeepMimic: Example-Guided Deep Reinforcement Learning of Physics-Based Character Skills</a>, Peng et al, 2018. <strong>Algorithm: DeepMimic.</strong></p>
+</dd>
+<dt class="label" id="id91"><span class="brackets">91</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1810.00821">Variational Discriminator Bottleneck: Improving Imitation Learning, Inverse RL, and GANs by Constraining Information Flow</a>, Peng et al, 2018. <strong>Algorithm: VAIL.</strong></p>
+</dd>
+<dt class="label" id="id92"><span class="brackets">92</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1810.05017">One-Shot High-Fidelity Imitation: Training Large-Scale Deep Nets with RL</a>, Le Paine et al, 2018. <strong>Algorithm: MetaMimic.</strong></p>
+</dd>
+</dl>
+</section>
+<section id="reproducibility-analysis-and-critique">
+<h2><a class="toc-backref" href="#id118">12. Reproducibility, Analysis, and Critique</a><a class="headerlink" href="#reproducibility-analysis-and-critique" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id93"><span class="brackets">93</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1604.06778">Benchmarking Deep Reinforcement Learning for Continuous Control</a>, Duan et al, 2016. <strong>Contribution: rllab.</strong></p>
+</dd>
+<dt class="label" id="id94"><span class="brackets">94</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1708.04133">Reproducibility of Benchmarked Deep Reinforcement Learning Tasks for Continuous Control</a>, Islam et al, 2017.</p>
+</dd>
+<dt class="label" id="id95"><span class="brackets">95</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1709.06560">Deep Reinforcement Learning that Matters</a>, Henderson et al, 2017.</p>
+</dd>
+<dt class="label" id="id96"><span class="brackets">96</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1810.02525">Where Did My Optimum Go?: An Empirical Analysis of Gradient Descent Optimization in Policy Gradient Methods</a>, Henderson et al, 2018.</p>
+</dd>
+<dt class="label" id="id97"><span class="brackets">97</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1811.02553">Are Deep Policy Gradient Algorithms Truly Policy Gradient Algorithms?</a>, Ilyas et al, 2018.</p>
+</dd>
+<dt class="label" id="id98"><span class="brackets">98</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1803.07055">Simple Random Search Provides a Competitive Approach to Reinforcement Learning</a>, Mania et al, 2018.</p>
+</dd>
+<dt class="label" id="id99"><span class="brackets">99</span></dt>
+<dd><p><a class="reference external" href="https://arxiv.org/abs/1907.02057">Benchmarking Model-Based Reinforcement Learning</a>, Wang et al, 2019.</p>
+</dd>
+</dl>
+</section>
+<section id="bonus-classic-papers-in-rl-theory-or-review">
+<h2><a class="toc-backref" href="#id119">13. Bonus: Classic Papers in RL Theory or Review</a><a class="headerlink" href="#bonus-classic-papers-in-rl-theory-or-review" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id100"><span class="brackets">100</span></dt>
+<dd><p><a class="reference external" href="https://papers.nips.cc/paper/1713-policy-gradient-methods-for-reinforcement-learning-with-function-approximation.pdf">Policy Gradient Methods for Reinforcement Learning with Function Approximation</a>, Sutton et al, 2000. <strong>Contributions:</strong> Established policy gradient theorem and showed convergence of policy gradient algorithm for arbitrary policy classes.</p>
+</dd>
+<dt class="label" id="id101"><span class="brackets">101</span></dt>
+<dd><p><a class="reference external" href="http://web.mit.edu/jnt/www/Papers/J063-97-bvr-td.pdf">An Analysis of Temporal-Difference Learning with Function Approximation</a>, Tsitsiklis and Van Roy, 1997. <strong>Contributions:</strong> Variety of convergence results and counter-examples for value-learning methods in RL.</p>
+</dd>
+<dt class="label" id="id102"><span class="brackets">102</span></dt>
+<dd><p><a class="reference external" href="http://www.kyb.mpg.de/fileadmin/user_upload/files/publications/attachments/Neural-Netw-2008-21-682_4867%5b0%5d.pdf">Reinforcement Learning of Motor Skills with Policy Gradients</a>, Peters and Schaal, 2008. <strong>Contributions:</strong> Thorough review of policy gradient methods at the time, many of which are still serviceable descriptions of deep RL methods.</p>
+</dd>
+<dt class="label" id="id103"><span class="brackets">103</span></dt>
+<dd><p><a class="reference external" href="https://people.eecs.berkeley.edu/~pabbeel/cs287-fa09/readings/KakadeLangford-icml2002.pdf">Approximately Optimal Approximate Reinforcement Learning</a>, Kakade and Langford, 2002. <strong>Contributions:</strong> Early roots for monotonic improvement theory, later leading to theoretical justification for TRPO and other algorithms.</p>
+</dd>
+<dt class="label" id="id104"><span class="brackets">104</span></dt>
+<dd><p><a class="reference external" href="https://papers.nips.cc/paper/2073-a-natural-policy-gradient.pdf">A Natural Policy Gradient</a>, Kakade, 2002. <strong>Contributions:</strong> Brought natural gradients into RL, later leading to TRPO, ACKTR, and several other methods in deep RL.</p>
+</dd>
+<dt class="label" id="id105"><span class="brackets">105</span></dt>
+<dd><p><a class="reference external" href="https://sites.ualberta.ca/~szepesva/papers/RLAlgsInMDPs.pdf">Algorithms for Reinforcement Learning</a>, Szepesvari, 2009. <strong>Contributions:</strong> Unbeatable reference on RL before deep RL, containing foundations and theoretical background.</p>
+</dd>
+</dl>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">multi-agent-market-rl</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../MultiAgentMarketRL.html">Multi-Agent-Market-RL</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Benjamin Suter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../../_sources/submodules/spinningup-rl-tutorial/docs/spinningup/keypapers.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

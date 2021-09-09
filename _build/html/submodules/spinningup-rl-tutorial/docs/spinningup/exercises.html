@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Exercises &#8212; multi-agent-market-rl 26.7.21 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css" />
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="exercises">
+<h1><a class="toc-backref" href="#id2">Exercises</a><a class="headerlink" href="#exercises" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title">Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#exercises" id="id2">Exercises</a></p>
+<ul>
+<li><p><a class="reference internal" href="#problem-set-1-basics-of-implementation" id="id3">Problem Set 1: Basics of Implementation</a></p></li>
+<li><p><a class="reference internal" href="#problem-set-2-algorithm-failure-modes" id="id4">Problem Set 2: Algorithm Failure Modes</a></p></li>
+<li><p><a class="reference internal" href="#challenges" id="id5">Challenges</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="problem-set-1-basics-of-implementation">
+<h2><a class="toc-backref" href="#id3">Problem Set 1: Basics of Implementation</a><a class="headerlink" href="#problem-set-1-basics-of-implementation" title="Permalink to this headline">¶</a></h2>
+<div class="admonition-exercise-1-1-gaussian-log-likelihood admonition">
+<p class="admonition-title">Exercise 1.1: Gaussian Log-Likelihood</p>
+<p><strong>Path to Exercise:</strong></p>
+<ul class="simple">
+<li><p>PyTorch version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/pytorch/problem_set_1/exercise1_1.py</span></code></p></li>
+<li><p>Tensorflow version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/tf1/problem_set_1/exercise1_1.py</span></code></p></li>
+</ul>
+<p><strong>Path to Solution:</strong></p>
+<ul class="simple">
+<li><p>PyTorch version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/pytorch/problem_set_1_solutions/exercise1_1_soln.py</span></code></p></li>
+<li><p>Tensorflow version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/tf1/problem_set_1_solutions/exercise1_1_soln.py</span></code></p></li>
+</ul>
+<p><strong>Instructions.</strong> Write a function that takes in the means and log stds of a batch of diagonal Gaussian distributions, along with (previously-generated) samples from those distributions, and returns the log likelihoods of those samples. (In the Tensorflow version, you will write a function that creates computation graph operations to do this; in the PyTorch version, you will directly operate on given Tensors.)</p>
+<p>You may find it useful to review the formula given in <a class="reference external" href="../spinningup/rl_intro.html#stochastic-policies">this section of the RL introduction</a>.</p>
+<p>Implement your solution in <code class="docutils literal notranslate"><span class="pre">exercise1_1.py</span></code>, and run that file to automatically check your work.</p>
+<p><strong>Evaluation Criteria.</strong> Your solution will be checked by comparing outputs against a known-good implementation, using a batch of random inputs.</p>
+</div>
+<div class="admonition-exercise-1-2-policy-for-ppo admonition">
+<p class="admonition-title">Exercise 1.2: Policy for PPO</p>
+<p><strong>Path to Exercise:</strong></p>
+<ul class="simple">
+<li><p>PyTorch version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/pytorch/problem_set_1/exercise1_2.py</span></code></p></li>
+<li><p>Tensorflow version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/tf1/problem_set_1/exercise1_2.py</span></code></p></li>
+</ul>
+<p><strong>Path to Solution:</strong></p>
+<ul class="simple">
+<li><p>PyTorch version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/pytorch/problem_set_1_solutions/exercise1_2_soln.py</span></code></p></li>
+<li><p>Tensorflow version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/tf1/problem_set_1_solutions/exercise1_2_soln.py</span></code></p></li>
+</ul>
+<p><strong>Instructions.</strong> Implement an MLP diagonal Gaussian policy for PPO.</p>
+<p>Implement your solution in <code class="docutils literal notranslate"><span class="pre">exercise1_2.py</span></code>, and run that file to automatically check your work.</p>
+<p><strong>Evaluation Criteria.</strong> Your solution will be evaluated by running for 20 epochs in the InvertedPendulum-v2 Gym environment, and this should take in the ballpark of 3-5 minutes (depending on your machine, and other processes you are running in the background). The bar for success is reaching an average score of over 500 in the last 5 epochs, or getting to a score of 1000 (the maximum possible score) in the last 5 epochs.</p>
+</div>
+<div class="admonition-exercise-1-3-computation-graph-for-td3 admonition">
+<p class="admonition-title">Exercise 1.3: Computation Graph for TD3</p>
+<p><strong>Path to Exercise.</strong></p>
+<ul class="simple">
+<li><p>PyTorch version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/pytorch/problem_set_1/exercise1_3.py</span></code></p></li>
+<li><p>Tensorflow version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/tf1/problem_set_1/exercise1_3.py</span></code></p></li>
+</ul>
+<p><strong>Path to Solution.</strong></p>
+<ul class="simple">
+<li><p>PyTorch version: <code class="docutils literal notranslate"><span class="pre">spinup/algos/pytorch/td3/td3.py</span></code></p></li>
+<li><p>Tensorflow version: <code class="docutils literal notranslate"><span class="pre">spinup/algos/tf1/td3/td3.py</span></code></p></li>
+</ul>
+<p><strong>Instructions.</strong> Implement the main mathematical logic for the TD3 algorithm.</p>
+<p>As starter code, you are given the entirety of the TD3 algorithm except for the main mathematical logic (essentially, the loss functions and intermediate calculations needed for them). Find “YOUR CODE HERE” to begin.</p>
+<p>You may find it useful to review the pseudocode in our <a class="reference external" href="../algorithms/td3.html">page on TD3</a>.</p>
+<p>Implement your solution in <code class="docutils literal notranslate"><span class="pre">exercise1_3.py</span></code>, and run that file to see the results of your work. There is no automatic checking for this exercise.</p>
+<p><strong>Evaluation Criteria.</strong> Evaluate your code by running <code class="docutils literal notranslate"><span class="pre">exercise1_3.py</span></code> with HalfCheetah-v2, InvertedPendulum-v2, and one other Gym MuJoCo environment of your choosing (set via the <code class="docutils literal notranslate"><span class="pre">--env</span></code> flag). It is set up to use smaller neural networks (hidden sizes [128,128]) than typical for TD3, with a maximum episode length of 150, and to run for only 10 epochs. The goal is to see significant learning progress relatively quickly (in terms of wall clock time). Experiments will likely take on the order of ~10 minutes.</p>
+<p>Use the <code class="docutils literal notranslate"><span class="pre">--use_soln</span></code> flag to run Spinning Up’s TD3 instead of your implementation. Anecdotally, within 10 epochs, the score in HalfCheetah should go over 300, and the score in InvertedPendulum should max out at 150.</p>
+</div>
+</section>
+<section id="problem-set-2-algorithm-failure-modes">
+<h2><a class="toc-backref" href="#id4">Problem Set 2: Algorithm Failure Modes</a><a class="headerlink" href="#problem-set-2-algorithm-failure-modes" title="Permalink to this headline">¶</a></h2>
+<div class="admonition-exercise-2-1-value-function-fitting-in-trpo admonition">
+<p class="admonition-title">Exercise 2.1: Value Function Fitting in TRPO</p>
+<p><strong>Path to Exercise.</strong> (Not applicable, there is no code for this one.)</p>
+<p><strong>Path to Solution.</strong> <a class="reference external" href="../spinningup/exercise2_1_soln.html">Solution available here.</a></p>
+<p>Many factors can impact the performance of policy gradient algorithms, but few more drastically than the quality of the learned value function used for advantage estimation.</p>
+<p>In this exercise, you will compare results between runs of TRPO where you put lots of effort into fitting the value function (<code class="docutils literal notranslate"><span class="pre">train_v_iters=80</span></code>), versus where you put very little effort into fitting the value function (<code class="docutils literal notranslate"><span class="pre">train_v_iters=0</span></code>).</p>
+<p><strong>Instructions.</strong> Run the following command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">spinup</span><span class="o">.</span><span class="n">run</span> <span class="n">trpo</span> <span class="o">--</span><span class="n">env</span> <span class="n">Hopper</span><span class="o">-</span><span class="n">v2</span> <span class="o">--</span><span class="n">train_v_iters</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="mi">0</span> <span class="mi">80</span> <span class="o">--</span><span class="n">exp_name</span> <span class="n">ex2</span><span class="o">-</span><span class="mi">1</span> <span class="o">--</span><span class="n">epochs</span> <span class="mi">250</span> <span class="o">--</span><span class="n">steps_per_epoch</span> <span class="mi">4000</span> <span class="o">--</span><span class="n">seed</span> <span class="mi">0</span> <span class="mi">10</span> <span class="mi">20</span> <span class="o">--</span><span class="n">dt</span>
+</pre></div>
+</div>
+<p>and plot the results. (These experiments might take ~10 minutes each, and this command runs six of them.) What do you find?</p>
+</div>
+<div class="admonition-exercise-2-2-silent-bug-in-ddpg admonition">
+<p class="admonition-title">Exercise 2.2: Silent Bug in DDPG</p>
+<p><strong>Path to Exercise.</strong></p>
+<ul class="simple">
+<li><p>PyTorch version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/pytorch/problem_set_2/exercise2_2.py</span></code></p></li>
+<li><p>Tensorflow version: <code class="docutils literal notranslate"><span class="pre">spinup/exercises/tf1/problem_set_2/exercise2_2.py</span></code></p></li>
+</ul>
+<p><strong>Path to Solution.</strong> <a class="reference external" href="../spinningup/exercise2_2_soln.html">Solution available here.</a></p>
+<p>The hardest part of writing RL code is dealing with bugs, because failures are frequently silent. The code will appear to run correctly, but the agent’s performance will degrade relative to a bug-free implementation—sometimes to the extent that it never learns anything.</p>
+<p>In this exercise, you will observe a bug in vivo and compare results against correct code. The bug is the same (conceptually, if not in exact implementation) for both the PyTorch and Tensorflow versions of this exercise.</p>
+<p><strong>Instructions.</strong> Run <code class="docutils literal notranslate"><span class="pre">exercise2_2.py</span></code>, which will launch DDPG experiments with and without a bug. The non-bugged version runs the default Spinning Up implementation of DDPG, using a default method for creating the actor and critic networks. The bugged version runs the same DDPG code, except uses a bugged method for creating the networks.</p>
+<p>There will be six experiments in all (three random seeds for each case), and each should take in the ballpark of 10 minutes. When they’re finished, plot the results. What is the difference in performance with and without the bug?</p>
+<p>Without referencing the correct actor-critic code (which is to say—don’t look in DDPG’s <code class="docutils literal notranslate"><span class="pre">core.py</span></code> file), try to figure out what the bug is and explain how it breaks things.</p>
+<p><strong>Hint.</strong> To figure out what’s going wrong, think about how the DDPG code implements the DDPG computation graph. For the Tensorflow version, look at this excerpt:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Bellman backup for Q function</span>
+<span class="n">backup</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">r_ph</span> <span class="o">+</span> <span class="n">gamma</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">d_ph</span><span class="p">)</span><span class="o">*</span><span class="n">q_pi_targ</span><span class="p">)</span>
+
+<span class="c1"># DDPG losses</span>
+<span class="n">pi_loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">q_pi</span><span class="p">)</span>
+<span class="n">q_loss</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">((</span><span class="n">q</span><span class="o">-</span><span class="n">backup</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>How could a bug in the actor-critic code have an impact here?</p>
+<p><strong>Bonus.</strong> Are there any choices of hyperparameters which would have hidden the effects of the bug?</p>
+</div>
+</section>
+<section id="challenges">
+<h2><a class="toc-backref" href="#id5">Challenges</a><a class="headerlink" href="#challenges" title="Permalink to this headline">¶</a></h2>
+<div class="admonition-write-code-from-scratch admonition">
+<p class="admonition-title">Write Code from Scratch</p>
+<p>As we suggest in <a class="reference external" href="../spinningup/spinningup.html#learn-by-doing">the essay</a>, try reimplementing various deep RL algorithms from scratch.</p>
+</div>
+<div class="admonition-requests-for-research admonition">
+<p class="admonition-title">Requests for Research</p>
+<p>If you feel comfortable with writing deep learning and deep RL code, consider trying to make progress on any of OpenAI’s standing requests for research:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://openai.com/requests-for-research/">Requests for Research 1</a></p></li>
+<li><p><a class="reference external" href="https://blog.openai.com/requests-for-research-2/">Requests for Research 2</a></p></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">multi-agent-market-rl</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../MultiAgentMarketRL.html">Multi-Agent-Market-RL</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Benjamin Suter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../../_sources/submodules/spinningup-rl-tutorial/docs/spinningup/exercises.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

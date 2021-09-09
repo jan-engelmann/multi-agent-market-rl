@@ -1,0 +1,438 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Part 3: Intro to Policy Optimization &#8212; multi-agent-market-rl 26.7.21 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css" />
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="part-3-intro-to-policy-optimization">
+<h1><a class="toc-backref" href="#id7">Part 3: Intro to Policy Optimization</a><a class="headerlink" href="#part-3-intro-to-policy-optimization" title="Permalink to this headline">¶</a></h1>
+<div class="contents topic" id="table-of-contents">
+<p class="topic-title">Table of Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#part-3-intro-to-policy-optimization" id="id7">Part 3: Intro to Policy Optimization</a></p>
+<ul>
+<li><p><a class="reference internal" href="#deriving-the-simplest-policy-gradient" id="id8">Deriving the Simplest Policy Gradient</a></p></li>
+<li><p><a class="reference internal" href="#implementing-the-simplest-policy-gradient" id="id9">Implementing the Simplest Policy Gradient</a></p></li>
+<li><p><a class="reference internal" href="#expected-grad-log-prob-lemma" id="id10">Expected Grad-Log-Prob Lemma</a></p></li>
+<li><p><a class="reference internal" href="#don-t-let-the-past-distract-you" id="id11">Don’t Let the Past Distract You</a></p></li>
+<li><p><a class="reference internal" href="#implementing-reward-to-go-policy-gradient" id="id12">Implementing Reward-to-Go Policy Gradient</a></p></li>
+<li><p><a class="reference internal" href="#baselines-in-policy-gradients" id="id13">Baselines in Policy Gradients</a></p></li>
+<li><p><a class="reference internal" href="#other-forms-of-the-policy-gradient" id="id14">Other Forms of the Policy Gradient</a></p></li>
+<li><p><a class="reference internal" href="#recap" id="id15">Recap</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>In this section, we’ll discuss the mathematical foundations of policy optimization algorithms, and connect the material to sample code. We will cover three key results in the theory of <strong>policy gradients</strong>:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="../spinningup/rl_intro3.html#deriving-the-simplest-policy-gradient">the simplest equation</a> describing the gradient of policy performance with respect to policy parameters,</p></li>
+<li><p>a rule which allows us to <a class="reference external" href="../spinningup/rl_intro3.html#don-t-let-the-past-distract-you">drop useless terms</a> from that expression,</p></li>
+<li><p>and a rule which allows us to <a class="reference external" href="../spinningup/rl_intro3.html#baselines-in-policy-gradients">add useful terms</a> to that expression.</p></li>
+</ul>
+<p>In the end, we’ll tie those results together and describe the advantage-based expression for the policy gradient—the version we use in our <a class="reference external" href="../algorithms/vpg.html">Vanilla Policy Gradient</a> implementation.</p>
+<section id="deriving-the-simplest-policy-gradient">
+<h2><a class="toc-backref" href="#id8">Deriving the Simplest Policy Gradient</a><a class="headerlink" href="#deriving-the-simplest-policy-gradient" title="Permalink to this headline">¶</a></h2>
+<p>Here, we consider the case of a stochastic, parameterized policy, <span class="math notranslate nohighlight">\(\pi_{\theta}\)</span>. We aim to maximize the expected return <span class="math notranslate nohighlight">\(J(\pi_{\theta}) = \underE{\tau \sim \pi_{\theta}}{R(\tau)}\)</span>. For the purposes of this derivation, we’ll take <span class="math notranslate nohighlight">\(R(\tau)\)</span> to give the <a class="reference external" href="../spinningup/rl_intro.html#reward-and-return">finite-horizon undiscounted return</a>, but the derivation for the infinite-horizon discounted return setting is almost identical.</p>
+<p>We would like to optimize the policy by gradient ascent, eg</p>
+<div class="math notranslate nohighlight">
+\[\theta_{k+1} = \theta_k + \alpha \left. \nabla_{\theta} J(\pi_{\theta}) \right|_{\theta_k}.\]</div>
+<p>The gradient of policy performance, <span class="math notranslate nohighlight">\(\nabla_{\theta} J(\pi_{\theta})\)</span>, is called the <strong>policy gradient</strong>, and algorithms that optimize the policy this way are called <strong>policy gradient algorithms.</strong> (Examples include Vanilla Policy Gradient and TRPO. PPO is often referred to as a policy gradient algorithm, though this is slightly inaccurate.)</p>
+<p>To actually use this algorithm, we need an expression for the policy gradient which we can numerically compute. This involves two steps: 1) deriving the analytical gradient of policy performance, which turns out to have the form of an expected value, and then 2) forming a sample estimate of that expected value, which can be computed with data from a finite number of agent-environment interaction steps.</p>
+<p>In this subsection, we’ll find the simplest form of that expression. In later subsections, we’ll show how to improve on the simplest form to get the version we actually use in standard policy gradient implementations.</p>
+<p>We’ll begin by laying out a few facts which are useful for deriving the analytical gradient.</p>
+<p><strong>1. Probability of a Trajectory.</strong> The probability of a trajectory <span class="math notranslate nohighlight">\(\tau = (s_0, a_0, ..., s_{T+1})\)</span> given that actions come from <span class="math notranslate nohighlight">\(\pi_{\theta}\)</span> is</p>
+<div class="math notranslate nohighlight">
+\[P(\tau|\theta) = \rho_0 (s_0) \prod_{t=0}^{T} P(s_{t+1}|s_t, a_t) \pi_{\theta}(a_t |s_t).\]</div>
+<p><strong>2. The Log-Derivative Trick.</strong> The log-derivative trick is based on a simple rule from calculus: the derivative of <span class="math notranslate nohighlight">\(\log x\)</span> with respect to <span class="math notranslate nohighlight">\(x\)</span> is <span class="math notranslate nohighlight">\(1/x\)</span>. When rearranged and combined with chain rule, we get:</p>
+<div class="math notranslate nohighlight">
+\[\nabla_{\theta} P(\tau | \theta) = P(\tau | \theta) \nabla_{\theta} \log P(\tau | \theta).\]</div>
+<p><strong>3. Log-Probability of a Trajectory.</strong> The log-prob of a trajectory is just</p>
+<div class="math notranslate nohighlight">
+\[\log P(\tau|\theta) = \log \rho_0 (s_0) + \sum_{t=0}^{T} \bigg( \log P(s_{t+1}|s_t, a_t)  + \log \pi_{\theta}(a_t |s_t)\bigg).\]</div>
+<p><strong>4. Gradients of Environment Functions.</strong> The environment has no dependence on <span class="math notranslate nohighlight">\(\theta\)</span>, so gradients of <span class="math notranslate nohighlight">\(\rho_0(s_0)\)</span>, <span class="math notranslate nohighlight">\(P(s_{t+1}|s_t, a_t)\)</span>, and <span class="math notranslate nohighlight">\(R(\tau)\)</span> are zero.</p>
+<p><strong>5. Grad-Log-Prob of a Trajectory.</strong> The gradient of the log-prob of a trajectory is thus</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\nabla_{\theta} \log P(\tau | \theta) &amp;= \cancel{\nabla_{\theta} \log \rho_0 (s_0)} + \sum_{t=0}^{T} \bigg( \cancel{\nabla_{\theta} \log P(s_{t+1}|s_t, a_t)}  + \nabla_{\theta} \log \pi_{\theta}(a_t |s_t)\bigg) \\
+&amp;= \sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t).\end{split}\]</div>
+<p>Putting it all together, we derive the following:</p>
+<div class="admonition-derivation-for-basic-policy-gradient admonition">
+<p class="admonition-title">Derivation for Basic Policy Gradient</p>
+<div class="math notranslate nohighlight">
+\begin{align*}
+\nabla_{\theta} J(\pi_{\theta}) &amp;= \nabla_{\theta} \underE{\tau \sim \pi_{\theta}}{R(\tau)} &amp; \\
+&amp;= \nabla_{\theta} \int_{\tau} P(\tau|\theta) R(\tau) &amp; \text{Expand expectation} \\
+&amp;= \int_{\tau} \nabla_{\theta} P(\tau|\theta) R(\tau) &amp; \text{Bring gradient under integral} \\
+&amp;= \int_{\tau} P(\tau|\theta) \nabla_{\theta} \log P(\tau|\theta) R(\tau) &amp; \text{Log-derivative trick} \\
+&amp;= \underE{\tau \sim \pi_{\theta}}{\nabla_{\theta} \log P(\tau|\theta) R(\tau)} &amp; \text{Return to expectation form} \\
+\therefore \nabla_{\theta} J(\pi_{\theta}) &amp;= \underE{\tau \sim \pi_{\theta}}{\sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) R(\tau)} &amp; \text{Expression for grad-log-prob}
+\end{align*}</div></div>
+<p>This is an expectation, which means that we can estimate it with a sample mean. If we collect a set of trajectories <span class="math notranslate nohighlight">\(\mathcal{D} = \{\tau_i\}_{i=1,...,N}\)</span> where each trajectory is obtained by letting the agent act in the environment using the policy <span class="math notranslate nohighlight">\(\pi_{\theta}\)</span>, the policy gradient can be estimated with</p>
+<div class="math notranslate nohighlight">
+\[\hat{g} = \frac{1}{|\mathcal{D}|} \sum_{\tau \in \mathcal{D}} \sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) R(\tau),\]</div>
+<p>where <span class="math notranslate nohighlight">\(|\mathcal{D}|\)</span> is the number of trajectories in <span class="math notranslate nohighlight">\(\mathcal{D}\)</span> (here, <span class="math notranslate nohighlight">\(N\)</span>).</p>
+<p>This last expression is the simplest version of the computable expression we desired. Assuming that we have represented our policy in a way which allows us to calculate <span class="math notranslate nohighlight">\(\nabla_{\theta} \log \pi_{\theta}(a|s)\)</span>, and if we are able to run the policy in the environment to collect the trajectory dataset, we can compute the policy gradient and take an update step.</p>
+</section>
+<section id="implementing-the-simplest-policy-gradient">
+<h2><a class="toc-backref" href="#id9">Implementing the Simplest Policy Gradient</a><a class="headerlink" href="#implementing-the-simplest-policy-gradient" title="Permalink to this headline">¶</a></h2>
+<p>We give a short PyTorch implementation of this simple version of the policy gradient algorithm in <code class="docutils literal notranslate"><span class="pre">spinup/examples/pytorch/pg_math/1_simple_pg.py</span></code>. (It can also be viewed <a class="reference external" href="https://github.com/openai/spinningup/blob/master/spinup/examples/pytorch/pg_math/1_simple_pg.py">on github</a>.) It is only 128 lines long, so we highly recommend reading through it in depth. While we won’t go through the entirety of the code here, we’ll highlight and explain a few important pieces.</p>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>This section was previously written with a Tensorflow example. The old Tensorflow section can be found <a class="reference external" href="../spinningup/extra_tf_pg_implementation.html#implementing-the-simplest-policy-gradient">here</a>.</p>
+</div>
+<p><strong>1. Making the Policy Network.</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">30</span><span class="c1"># make core of policy network</span>
+<span class="linenos">31</span><span class="n">logits_net</span> <span class="o">=</span> <span class="n">mlp</span><span class="p">(</span><span class="n">sizes</span><span class="o">=</span><span class="p">[</span><span class="n">obs_dim</span><span class="p">]</span><span class="o">+</span><span class="n">hidden_sizes</span><span class="o">+</span><span class="p">[</span><span class="n">n_acts</span><span class="p">])</span>
+<span class="linenos">32</span>
+<span class="linenos">33</span><span class="c1"># make function to compute action distribution</span>
+<span class="linenos">34</span><span class="k">def</span> <span class="nf">get_policy</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
+<span class="linenos">35</span>    <span class="n">logits</span> <span class="o">=</span> <span class="n">logits_net</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+<span class="linenos">36</span>    <span class="k">return</span> <span class="n">Categorical</span><span class="p">(</span><span class="n">logits</span><span class="o">=</span><span class="n">logits</span><span class="p">)</span>
+<span class="linenos">37</span>
+<span class="linenos">38</span><span class="c1"># make action selection function (outputs int actions, sampled from policy)</span>
+<span class="linenos">39</span><span class="k">def</span> <span class="nf">get_action</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
+<span class="linenos">40</span>    <span class="k">return</span> <span class="n">get_policy</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This block builds modules and functions for using a feedforward neural network categorical policy. (See the <a class="reference external" href="../spinningup/rl_intro.html#stochastic-policies">Stochastic Policies</a> section in Part 1 for a refresher.) The output from the <code class="docutils literal notranslate"><span class="pre">logits_net</span></code> module can be used to construct log-probabilities and probabilities for actions, and the <code class="docutils literal notranslate"><span class="pre">get_action</span></code> function samples actions based on probabilities computed from the logits. (Note: this particular <code class="docutils literal notranslate"><span class="pre">get_action</span></code> function assumes that there will only be one <code class="docutils literal notranslate"><span class="pre">obs</span></code> provided, and therefore only one integer action output. That’s why it uses <code class="docutils literal notranslate"><span class="pre">.item()</span></code>, which is used to <a class="reference external" href="https://pytorch.org/docs/stable/tensors.html#torch.Tensor.item">get the contents of a Tensor with only one element</a>.)</p>
+<p>A lot of work in this example is getting done by the <code class="docutils literal notranslate"><span class="pre">Categorical</span></code> object on L36. This is a PyTorch <code class="docutils literal notranslate"><span class="pre">Distribution</span></code> object that wraps up some mathematical functions associated with probability distributions. In particular, it has a method for sampling from the distribution (which we use on L40) and a method for computing log probabilities of given samples (which we use later). Since PyTorch distributions are really useful for RL, check out <a class="reference external" href="https://pytorch.org/docs/stable/distributions.html">their documentation</a> to get a feel for how they work.</p>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>Friendly reminder! When we talk about a categorical distribution having “logits,” what we mean is that the probabilities for each outcome are given by the Softmax function of the logits. That is, the probability for action <span class="math notranslate nohighlight">\(j\)</span> under a categorical distribution with logits <span class="math notranslate nohighlight">\(x_j\)</span> is:</p>
+<div class="math notranslate nohighlight">
+\[p_j = \frac{\exp(x_j)}{\sum_{i} \exp(x_i)}\]</div>
+</div>
+<p><strong>2. Making the Loss Function.</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">42</span><span class="c1"># make loss function whose gradient, for the right data, is policy gradient</span>
+<span class="linenos">43</span><span class="k">def</span> <span class="nf">compute_loss</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">act</span><span class="p">,</span> <span class="n">weights</span><span class="p">):</span>
+<span class="linenos">44</span>    <span class="n">logp</span> <span class="o">=</span> <span class="n">get_policy</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+<span class="linenos">45</span>    <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">logp</span> <span class="o">*</span> <span class="n">weights</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>In this block, we build a “loss” function for the policy gradient algorithm. When the right data is plugged in, the gradient of this loss is equal to the policy gradient. The right data means a set of (state, action, weight) tuples collected while acting according to the current policy, where the weight for a state-action pair is the return from the episode to which it belongs. (Although as we will show in later subsections, there are other values you can plug in for the weight which also work correctly.)</p>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>Even though we describe this as a loss function, it is <strong>not</strong> a loss function in the typical sense from supervised learning. There are two main differences from standard loss functions.</p>
+<p><strong>1. The data distribution depends on the parameters.</strong> A loss function is usually defined on a fixed data distribution which is independent of the parameters we aim to optimize. Not so here, where the data must be sampled on the most recent policy.</p>
+<p><strong>2. It doesn’t measure performance.</strong> A loss function usually evaluates the performance metric that we care about. Here, we care about expected return, <span class="math notranslate nohighlight">\(J(\pi_{\theta})\)</span>, but our “loss” function does not approximate this at all, even in expectation. This “loss” function is only useful to us because, when evaluated at the current parameters, with data generated by the current parameters, it has the negative gradient of performance.</p>
+<p>But after that first step of gradient descent, there is no more connection to performance. This means that minimizing this “loss” function, for a given batch of data, has <em>no</em> guarantee whatsoever of improving expected return. You can send this loss to <span class="math notranslate nohighlight">\(-\infty\)</span> and policy performance could crater; in fact, it usually will. Sometimes a deep RL researcher might describe this outcome as the policy “overfitting” to a batch of data. This is descriptive, but should not be taken literally because it does not refer to generalization error.</p>
+<p>We raise this point because it is common for ML practitioners to interpret a loss function as a useful signal during training—“if the loss goes down, all is well.” In policy gradients, this intuition is wrong, and you should only care about average return. The loss function means nothing.</p>
+</div>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>The approach used here to make the <code class="docutils literal notranslate"><span class="pre">logp</span></code> tensor–calling the <code class="docutils literal notranslate"><span class="pre">log_prob</span></code> method of a PyTorch <code class="docutils literal notranslate"><span class="pre">Categorical</span></code> object–may require some modification to work with other kinds of distribution objects.</p>
+<p>For example, if you are using a <a class="reference external" href="https://pytorch.org/docs/stable/distributions.html#normal">Normal distribution</a> (for a diagonal Gaussian policy), the output from calling <code class="docutils literal notranslate"><span class="pre">policy.log_prob(act)</span></code> will give you a Tensor containing separate log probabilities for each component of each vector-valued action. That is to say, you put in a Tensor of shape <code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">act_dim)</span></code>, and get out a Tensor of shape <code class="docutils literal notranslate"><span class="pre">(batch,</span> <span class="pre">act_dim)</span></code>, when what you need for making an RL loss is a Tensor of shape <code class="docutils literal notranslate"><span class="pre">(batch,)</span></code>. In that case, you would sum up the log probabilities of the action components to get the log probabilities of the actions. That is, you would compute:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logp</span> <span class="o">=</span> <span class="n">get_policy</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span><span class="o">.</span><span class="n">log_prob</span><span class="p">(</span><span class="n">act</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<p><strong>3. Running One Epoch of Training.</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos"> 50</span><span class="c1"># for training policy</span>
+<span class="linenos"> 51</span><span class="k">def</span> <span class="nf">train_one_epoch</span><span class="p">():</span>
+<span class="linenos"> 52</span>    <span class="c1"># make some empty lists for logging.</span>
+<span class="linenos"> 53</span>    <span class="n">batch_obs</span> <span class="o">=</span> <span class="p">[]</span>          <span class="c1"># for observations</span>
+<span class="linenos"> 54</span>    <span class="n">batch_acts</span> <span class="o">=</span> <span class="p">[]</span>         <span class="c1"># for actions</span>
+<span class="linenos"> 55</span>    <span class="n">batch_weights</span> <span class="o">=</span> <span class="p">[]</span>      <span class="c1"># for R(tau) weighting in policy gradient</span>
+<span class="linenos"> 56</span>    <span class="n">batch_rets</span> <span class="o">=</span> <span class="p">[]</span>         <span class="c1"># for measuring episode returns</span>
+<span class="linenos"> 57</span>    <span class="n">batch_lens</span> <span class="o">=</span> <span class="p">[]</span>         <span class="c1"># for measuring episode lengths</span>
+<span class="linenos"> 58</span>
+<span class="linenos"> 59</span>    <span class="c1"># reset episode-specific variables</span>
+<span class="linenos"> 60</span>    <span class="n">obs</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>       <span class="c1"># first obs comes from starting distribution</span>
+<span class="linenos"> 61</span>    <span class="n">done</span> <span class="o">=</span> <span class="kc">False</span>            <span class="c1"># signal from environment that episode is over</span>
+<span class="linenos"> 62</span>    <span class="n">ep_rews</span> <span class="o">=</span> <span class="p">[]</span>            <span class="c1"># list for rewards accrued throughout ep</span>
+<span class="linenos"> 63</span>
+<span class="linenos"> 64</span>    <span class="c1"># render first episode of each epoch</span>
+<span class="linenos"> 65</span>    <span class="n">finished_rendering_this_epoch</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="linenos"> 66</span>
+<span class="linenos"> 67</span>    <span class="c1"># collect experience by acting in the environment with current policy</span>
+<span class="linenos"> 68</span>    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+<span class="linenos"> 69</span>
+<span class="linenos"> 70</span>        <span class="c1"># rendering</span>
+<span class="linenos"> 71</span>        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">finished_rendering_this_epoch</span><span class="p">)</span> <span class="ow">and</span> <span class="n">render</span><span class="p">:</span>
+<span class="linenos"> 72</span>            <span class="n">env</span><span class="o">.</span><span class="n">render</span><span class="p">()</span>
+<span class="linenos"> 73</span>
+<span class="linenos"> 74</span>        <span class="c1"># save obs</span>
+<span class="linenos"> 75</span>        <span class="n">batch_obs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+<span class="linenos"> 76</span>
+<span class="linenos"> 77</span>        <span class="c1"># act in the environment</span>
+<span class="linenos"> 78</span>        <span class="n">act</span> <span class="o">=</span> <span class="n">get_action</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+<span class="linenos"> 79</span>        <span class="n">obs</span><span class="p">,</span> <span class="n">rew</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+<span class="linenos"> 80</span>
+<span class="linenos"> 81</span>        <span class="c1"># save action, reward</span>
+<span class="linenos"> 82</span>        <span class="n">batch_acts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">act</span><span class="p">)</span>
+<span class="linenos"> 83</span>        <span class="n">ep_rews</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rew</span><span class="p">)</span>
+<span class="linenos"> 84</span>
+<span class="linenos"> 85</span>        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+<span class="linenos"> 86</span>            <span class="c1"># if episode is over, record info about episode</span>
+<span class="linenos"> 87</span>            <span class="n">ep_ret</span><span class="p">,</span> <span class="n">ep_len</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">ep_rews</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">ep_rews</span><span class="p">)</span>
+<span class="linenos"> 88</span>            <span class="n">batch_rets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ep_ret</span><span class="p">)</span>
+<span class="linenos"> 89</span>            <span class="n">batch_lens</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ep_len</span><span class="p">)</span>
+<span class="linenos"> 90</span>
+<span class="linenos"> 91</span>            <span class="c1"># the weight for each logprob(a|s) is R(tau)</span>
+<span class="linenos"> 92</span>            <span class="n">batch_weights</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ep_ret</span><span class="p">]</span> <span class="o">*</span> <span class="n">ep_len</span>
+<span class="linenos"> 93</span>
+<span class="linenos"> 94</span>            <span class="c1"># reset episode-specific variables</span>
+<span class="linenos"> 95</span>            <span class="n">obs</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">ep_rews</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">reset</span><span class="p">(),</span> <span class="kc">False</span><span class="p">,</span> <span class="p">[]</span>
+<span class="linenos"> 96</span>
+<span class="linenos"> 97</span>            <span class="c1"># won&#39;t render again this epoch</span>
+<span class="linenos"> 98</span>            <span class="n">finished_rendering_this_epoch</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="linenos"> 99</span>
+<span class="linenos">100</span>            <span class="c1"># end experience loop if we have enough of it</span>
+<span class="linenos">101</span>            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch_obs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">batch_size</span><span class="p">:</span>
+<span class="linenos">102</span>                <span class="k">break</span>
+<span class="linenos">103</span>
+<span class="linenos">104</span>    <span class="c1"># take a single policy gradient update step</span>
+<span class="linenos">105</span>    <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+<span class="linenos">106</span>    <span class="n">batch_loss</span> <span class="o">=</span> <span class="n">compute_loss</span><span class="p">(</span><span class="n">obs</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">batch_obs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+<span class="linenos">107</span>                              <span class="n">act</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">batch_acts</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+<span class="linenos">108</span>                              <span class="n">weights</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">batch_weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+<span class="linenos">109</span>                              <span class="p">)</span>
+<span class="linenos">110</span>    <span class="n">batch_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+<span class="linenos">111</span>    <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="linenos">112</span>    <span class="k">return</span> <span class="n">batch_loss</span><span class="p">,</span> <span class="n">batch_rets</span><span class="p">,</span> <span class="n">batch_lens</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">train_one_epoch()</span></code> function runs one “epoch” of policy gradient, which we define to be</p>
+<ol class="arabic simple">
+<li><p>the experience collection step (L67-102), where the agent acts for some number of episodes in the environment using the most recent policy, followed by</p></li>
+<li><p>a single policy gradient update step (L104-111).</p></li>
+</ol>
+<p>The main loop of the algorithm just repeatedly calls <code class="docutils literal notranslate"><span class="pre">train_one_epoch()</span></code>.</p>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>If you aren’t already familiar with optimization in PyTorch, observe the pattern for taking one gradient descent step as shown in lines 104-111. First, clear the gradient buffers. Then, compute the loss function. Then, compute a backward pass on the loss function; this accumulates fresh gradients into the gradient buffers. Finally, take a step with the optimizer.</p>
+</div>
+</section>
+<section id="expected-grad-log-prob-lemma">
+<h2><a class="toc-backref" href="#id10">Expected Grad-Log-Prob Lemma</a><a class="headerlink" href="#expected-grad-log-prob-lemma" title="Permalink to this headline">¶</a></h2>
+<p>In this subsection, we will derive an intermediate result which is extensively used throughout the theory of policy gradients. We will call it the Expected Grad-Log-Prob (EGLP) lemma. <a class="footnote-reference brackets" href="#id2" id="id1">1</a></p>
+<p><strong>EGLP Lemma.</strong> Suppose that <span class="math notranslate nohighlight">\(P_{\theta}\)</span> is a parameterized probability distribution over a random variable, <span class="math notranslate nohighlight">\(x\)</span>. Then:</p>
+<div class="math notranslate nohighlight">
+\[\underE{x \sim P_{\theta}}{\nabla_{\theta} \log P_{\theta}(x)} = 0.\]</div>
+<div class="admonition-proof admonition">
+<p class="admonition-title">Proof</p>
+<p>Recall that all probability distributions are <em>normalized</em>:</p>
+<div class="math notranslate nohighlight">
+\[\int_x P_{\theta}(x) = 1.\]</div>
+<p>Take the gradient of both sides of the normalization condition:</p>
+<div class="math notranslate nohighlight">
+\[\nabla_{\theta} \int_x P_{\theta}(x) = \nabla_{\theta} 1 = 0.\]</div>
+<p>Use the log derivative trick to get:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}0 &amp;= \nabla_{\theta} \int_x P_{\theta}(x) \\
+&amp;= \int_x \nabla_{\theta} P_{\theta}(x) \\
+&amp;= \int_x P_{\theta}(x) \nabla_{\theta} \log P_{\theta}(x) \\
+\therefore 0 &amp;= \underE{x \sim P_{\theta}}{\nabla_{\theta} \log P_{\theta}(x)}.\end{split}\]</div>
+</div>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>The author of this article is not aware of this lemma being given a standard name anywhere in the literature. But given how often it comes up, it seems pretty worthwhile to give it some kind of name for ease of reference.</p>
+</dd>
+</dl>
+</section>
+<section id="don-t-let-the-past-distract-you">
+<h2><a class="toc-backref" href="#id11">Don’t Let the Past Distract You</a><a class="headerlink" href="#don-t-let-the-past-distract-you" title="Permalink to this headline">¶</a></h2>
+<p>Examine our most recent expression for the policy gradient:</p>
+<div class="math notranslate nohighlight">
+\[\nabla_{\theta} J(\pi_{\theta}) = \underE{\tau \sim \pi_{\theta}}{\sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) R(\tau)}.\]</div>
+<p>Taking a step with this gradient pushes up the log-probabilities of each action in proportion to <span class="math notranslate nohighlight">\(R(\tau)\)</span>, the sum of <em>all rewards ever obtained</em>. But this doesn’t make much sense.</p>
+<p>Agents should really only reinforce actions on the basis of their <em>consequences</em>. Rewards obtained before taking an action have no bearing on how good that action was: only rewards that come <em>after</em>.</p>
+<p>It turns out that this intuition shows up in the math, and we can show that the policy gradient can also be expressed by</p>
+<div class="math notranslate nohighlight">
+\[\nabla_{\theta} J(\pi_{\theta}) = \underE{\tau \sim \pi_{\theta}}{\sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \sum_{t'=t}^T R(s_{t'}, a_{t'}, s_{t'+1})}.\]</div>
+<p>In this form, actions are only reinforced based on rewards obtained after they are taken.</p>
+<p>We’ll call this form the “reward-to-go policy gradient,” because the sum of rewards after a point in a trajectory,</p>
+<div class="math notranslate nohighlight">
+\[\hat{R}_t \doteq \sum_{t'=t}^T R(s_{t'}, a_{t'}, s_{t'+1}),\]</div>
+<p>is called the <strong>reward-to-go</strong> from that point, and this policy gradient expression depends on the reward-to-go from state-action pairs.</p>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p><strong>But how is this better?</strong> A key problem with policy gradients is how many sample trajectories are needed to get a low-variance sample estimate for them. The formula we started with included terms for reinforcing actions proportional to past rewards, all of which had zero mean, but nonzero variance: as a result, they would just add noise to sample estimates of the policy gradient. By removing them, we reduce the number of sample trajectories needed.</p>
+</div>
+<p>An (optional) proof of this claim can be found <a href="#id16"><span class="problematic" id="id17">`here`_</span></a>, and it ultimately depends on the EGLP lemma.</p>
+</section>
+<section id="implementing-reward-to-go-policy-gradient">
+<h2><a class="toc-backref" href="#id12">Implementing Reward-to-Go Policy Gradient</a><a class="headerlink" href="#implementing-reward-to-go-policy-gradient" title="Permalink to this headline">¶</a></h2>
+<p>We give a short PyTorch implementation of the reward-to-go policy gradient in <code class="docutils literal notranslate"><span class="pre">spinup/examples/pytorch/pg_math/2_rtg_pg.py</span></code>. (It can also be viewed <a class="reference external" href="https://github.com/openai/spinningup/blob/master/spinup/examples/pytorch/pg_math/2_rtg_pg.py">on github</a>.)</p>
+<p>The only thing that has changed from <code class="docutils literal notranslate"><span class="pre">1_simple_pg.py</span></code> is that we now use different weights in the loss function. The code modification is very slight: we add a new function, and change two other lines. The new function is:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">17</span><span class="k">def</span> <span class="nf">reward_to_go</span><span class="p">(</span><span class="n">rews</span><span class="p">):</span>
+<span class="linenos">18</span>    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">rews</span><span class="p">)</span>
+<span class="linenos">19</span>    <span class="n">rtgs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">rews</span><span class="p">)</span>
+<span class="linenos">20</span>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)):</span>
+<span class="linenos">21</span>        <span class="n">rtgs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">rews</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">rtgs</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span> <span class="o">&lt;</span> <span class="n">n</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+<span class="linenos">22</span>    <span class="k">return</span> <span class="n">rtgs</span>
+</pre></div>
+</div>
+<p>And then we tweak the old L91-92 from:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">91</span>                <span class="c1"># the weight for each logprob(a|s) is R(tau)</span>
+<span class="linenos">92</span>                <span class="n">batch_weights</span> <span class="o">+=</span> <span class="p">[</span><span class="n">ep_ret</span><span class="p">]</span> <span class="o">*</span> <span class="n">ep_len</span>
+</pre></div>
+</div>
+<p>to:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="linenos">98</span>                <span class="c1"># the weight for each logprob(a_t|s_t) is reward-to-go from t</span>
+<span class="linenos">99</span>                <span class="n">batch_weights</span> <span class="o">+=</span> <span class="nb">list</span><span class="p">(</span><span class="n">reward_to_go</span><span class="p">(</span><span class="n">ep_rews</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>This section was previously written with a Tensorflow example. The old Tensorflow section can be found <a class="reference external" href="../spinningup/extra_tf_pg_implementation.html#implementing-reward-to-go-policy-gradient">here</a>.</p>
+</div>
+</section>
+<section id="baselines-in-policy-gradients">
+<h2><a class="toc-backref" href="#id13">Baselines in Policy Gradients</a><a class="headerlink" href="#baselines-in-policy-gradients" title="Permalink to this headline">¶</a></h2>
+<p>An immediate consequence of the EGLP lemma is that for any function <span class="math notranslate nohighlight">\(b\)</span> which only depends on state,</p>
+<div class="math notranslate nohighlight">
+\[\underE{a_t \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t|s_t) b(s_t)} = 0.\]</div>
+<p>This allows us to add or subtract any number of terms like this from our expression for the policy gradient, without changing it in expectation:</p>
+<div class="math notranslate nohighlight">
+\[\nabla_{\theta} J(\pi_{\theta}) = \underE{\tau \sim \pi_{\theta}}{\sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \left(\sum_{t'=t}^T R(s_{t'}, a_{t'}, s_{t'+1}) - b(s_t)\right)}.\]</div>
+<p>Any function <span class="math notranslate nohighlight">\(b\)</span> used in this way is called a <strong>baseline</strong>.</p>
+<p>The most common choice of baseline is the <a class="reference external" href="../spinningup/rl_intro.html#value-functions">on-policy value function</a> <span class="math notranslate nohighlight">\(V^{\pi}(s_t)\)</span>. Recall that this is the average return an agent gets if it starts in state <span class="math notranslate nohighlight">\(s_t\)</span> and then acts according to policy <span class="math notranslate nohighlight">\(\pi\)</span> for the rest of its life.</p>
+<p>Empirically, the choice <span class="math notranslate nohighlight">\(b(s_t) = V^{\pi}(s_t)\)</span> has the desirable effect of reducing variance in the sample estimate for the policy gradient. This results in faster and more stable policy learning. It is also appealing from a conceptual angle: it encodes the intuition that if an agent gets what it expected, it should “feel” neutral about it.</p>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>In practice, <span class="math notranslate nohighlight">\(V^{\pi}(s_t)\)</span> cannot be computed exactly, so it has to be approximated. This is usually done with a neural network, <span class="math notranslate nohighlight">\(V_{\phi}(s_t)\)</span>, which is updated concurrently with the policy (so that the value network always approximates the value function of the most recent policy).</p>
+<p>The simplest method for learning <span class="math notranslate nohighlight">\(V_{\phi}\)</span>, used in most implementations of policy optimization algorithms (including VPG, TRPO, PPO, and A2C), is to minimize a mean-squared-error objective:</p>
+<div class="math notranslate nohighlight">
+\[\phi_k = \arg \min_{\phi} \underE{s_t, \hat{R}_t \sim \pi_k}{\left( V_{\phi}(s_t) - \hat{R}_t \right)^2},\]</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
+<p>where <span class="math notranslate nohighlight">\(\pi_k\)</span> is the policy at epoch <span class="math notranslate nohighlight">\(k\)</span>. This is done with one or more steps of gradient descent, starting from the previous value parameters <span class="math notranslate nohighlight">\(\phi_{k-1}\)</span>.</p>
+</div>
+</section>
+<section id="other-forms-of-the-policy-gradient">
+<h2><a class="toc-backref" href="#id14">Other Forms of the Policy Gradient</a><a class="headerlink" href="#other-forms-of-the-policy-gradient" title="Permalink to this headline">¶</a></h2>
+<p>What we have seen so far is that the policy gradient has the general form</p>
+<div class="math notranslate nohighlight">
+\[\nabla_{\theta} J(\pi_{\theta}) = \underE{\tau \sim \pi_{\theta}}{\sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \Phi_t},\]</div>
+<p>where <span class="math notranslate nohighlight">\(\Phi_t\)</span> could be any of</p>
+<div class="math notranslate nohighlight">
+\[\Phi_t &amp;= R(\tau),\]</div>
+<p>or</p>
+<div class="math notranslate nohighlight">
+\[\Phi_t &amp;= \sum_{t'=t}^T R(s_{t'}, a_{t'}, s_{t'+1}),\]</div>
+<p>or</p>
+<div class="math notranslate nohighlight">
+\[\Phi_t &amp;= \sum_{t'=t}^T R(s_{t'}, a_{t'}, s_{t'+1}) - b(s_t).\]</div>
+<p>All of these choices lead to the same expected value for the policy gradient, despite having different variances. It turns out that there are two more valid choices of weights <span class="math notranslate nohighlight">\(\Phi_t\)</span> which are important to know.</p>
+<p><strong>1. On-Policy Action-Value Function.</strong> The choice</p>
+<div class="math notranslate nohighlight">
+\[\Phi_t = Q^{\pi_{\theta}}(s_t, a_t)\]</div>
+<p>is also valid. See <a class="reference external" href="../spinningup/extra_pg_proof2.html">this page</a> for an (optional) proof of this claim.</p>
+<p><strong>2. The Advantage Function.</strong> Recall that the <a class="reference external" href="../spinningup/rl_intro.html#advantage-functions">advantage of an action</a>, defined by <span class="math notranslate nohighlight">\(A^{\pi}(s_t,a_t) = Q^{\pi}(s_t,a_t) - V^{\pi}(s_t)\)</span>,  describes how much better or worse it is than other actions on average (relative to the current policy). This choice,</p>
+<div class="math notranslate nohighlight">
+\[\Phi_t = A^{\pi_{\theta}}(s_t, a_t)\]</div>
+<p>is also valid. The proof is that it’s equivalent to using <span class="math notranslate nohighlight">\(\Phi_t = Q^{\pi_{\theta}}(s_t, a_t)\)</span> and then using a value function baseline, which we are always free to do.</p>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>The formulation of policy gradients with advantage functions is extremely common, and there are many different ways of estimating the advantage function used by different algorithms.</p>
+</div>
+<div class="admonition-you-should-know admonition">
+<p class="admonition-title">You Should Know</p>
+<p>For a more detailed treatment of this topic, you should read the paper on <a class="reference external" href="https://arxiv.org/abs/1506.02438">Generalized Advantage Estimation</a> (GAE), which goes into depth about different choices of <span class="math notranslate nohighlight">\(\Phi_t\)</span> in the background sections.</p>
+<p>That paper then goes on to describe GAE, a method for approximating the advantage function in policy optimization algorithms which enjoys widespread use. For instance, Spinning Up’s implementations of VPG, TRPO, and PPO make use of it. As a result, we strongly advise you to study it.</p>
+</div>
+</section>
+<section id="recap">
+<h2><a class="toc-backref" href="#id15">Recap</a><a class="headerlink" href="#recap" title="Permalink to this headline">¶</a></h2>
+<p>In this chapter, we described the basic theory of policy gradient methods and connected some of the early results to code examples. The interested student should continue from here by studying how the later results (value function baselines and the advantage formulation of policy gradients) translate into Spinning Up’s implementation of <a class="reference external" href="../algorithms/vpg.html">Vanilla Policy Gradient</a>.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">multi-agent-market-rl</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../MultiAgentMarketRL.html">Multi-Agent-Market-RL</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Benjamin Suter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../../_sources/submodules/spinningup-rl-tutorial/docs/spinningup/rl_intro3.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

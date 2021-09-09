@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Extra Material &#8212; multi-agent-market-rl 26.7.21 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/alabaster.css" />
+    <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+    <script src="../../../../_static/jquery.js"></script>
+    <script src="../../../../_static/underscore.js"></script>
+    <script src="../../../../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="extra-material">
+<h1>Extra Material<a class="headerlink" href="#extra-material" title="Permalink to this headline">¶</a></h1>
+<section id="proof-for-don-t-let-the-past-distract-you">
+<h2>Proof for Don’t Let the Past Distract You<a class="headerlink" href="#proof-for-don-t-let-the-past-distract-you" title="Permalink to this headline">¶</a></h2>
+<p>In this subsection, we will prove that actions should not be reinforced for rewards obtained in the past.</p>
+<p>Expand out <span class="math notranslate nohighlight">\(R(\tau)\)</span> in the expression for the <a class="reference external" href="../spinningup/rl_intro3.html#deriving-the-simplest-policy-gradient">simplest policy gradient</a> to obtain:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\nabla_{\theta} J(\pi_{\theta}) &amp;= \underE{\tau \sim \pi_{\theta}}{\sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) R(\tau)} \\
+&amp;= \underE{\tau \sim \pi_{\theta}}{\sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \sum_{t'=0}^T R(s_{t'}, a_{t'}, s_{t'+1})} \\
+&amp;= \sum_{t=0}^{T} \sum_{t'=0}^T  \underE{\tau \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t |s_t) R(s_{t'}, a_{t'}, s_{t'+1})},\end{split}\]</div>
+<p>and consider the term</p>
+<div class="math notranslate nohighlight">
+\[\underE{\tau \sim \pi_{\theta}}{f(t,t')} = \underE{\tau \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t |s_t) R(s_{t'}, a_{t'}, s_{t'+1})}.\]</div>
+<p>We will show that for the case of <span class="math notranslate nohighlight">\(t' &lt; t\)</span> (the reward comes before the action being reinforced), this term is zero. This is a complete proof of the original claim, because after dropping terms with <span class="math notranslate nohighlight">\(t' &lt; t\)</span> from the expression, we are left with the reward-to-go form of the policy gradient, as desired:</p>
+<div class="math notranslate nohighlight">
+\[\nabla_{\theta} J(\pi_{\theta}) = \underE{\tau \sim \pi_{\theta}}{\sum_{t=0}^{T} \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \sum_{t'=t}^T R(s_{t'}, a_{t'}, s_{t'+1})}\]</div>
+<p><strong>1. Using the Marginal Distribution.</strong> To proceed, we have to break down the expectation in <span class="math notranslate nohighlight">\(\underE{\tau \sim \pi_{\theta}}{f(t,t')}\)</span>. It’s an expectation over trajectories, but the expression inside the expectation only deals with a few states and actions: <span class="math notranslate nohighlight">\(s_t\)</span>, <span class="math notranslate nohighlight">\(a_t\)</span>, <span class="math notranslate nohighlight">\(s_{t'}\)</span>, <span class="math notranslate nohighlight">\(a_{t'}\)</span>, and <span class="math notranslate nohighlight">\(s_{t'+1}\)</span>. So in computing the expectation, we only need to worry about the <a class="reference external" href="https://en.wikipedia.org/wiki/Marginal_distribution">marginal distribution</a> over these random variables.</p>
+<p>We derive:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\underE{\tau \sim \pi_{\theta}}{f(t,t')} &amp;= \int_{\tau} P(\tau|\pi_{\theta}) f(t,t') \\
+&amp;= \int_{s_t, a_t, s_{t'}, a_{t'}, s_{t'+1}} P(s_t, a_t, s_{t'}, a_{t'}, s_{t'+1} | \pi_{\theta}) f(t,t') \\
+&amp;= \underE{s_t, a_t, s_{t'}, a_{t'}, s_{t'+1} \sim \pi_{\theta}}{f(t,t')}.\end{split}\]</div>
+<p><strong>2. Probability Chain Rule.</strong> Joint distributions can be calculated in terms of conditional and marginal probabilities via <a class="reference external" href="https://en.wikipedia.org/wiki/Chain_rule_(probability)">chain rule of probability</a>: <span class="math notranslate nohighlight">\(P(A,B) = P(B|A) P(A)\)</span>. Here, we use this rule to compute</p>
+<div class="math notranslate nohighlight">
+\[P(s_t, a_t, s_{t'}, a_{t'}, s_{t'+1} | \pi_{\theta}) = P(s_t, a_t | \pi_{\theta}, s_{t'}, a_{t'}, s_{t'+1}) P(s_{t'}, a_{t'}, s_{t'+1} | \pi_{\theta})\]</div>
+<p><strong>3. Separating Expectations Over Multiple Random Variables.</strong> If we have an expectation over two random variables <span class="math notranslate nohighlight">\(A\)</span> and <span class="math notranslate nohighlight">\(B\)</span>, we can split it into an inner and outer expectation, where the inner expectation treats the variable from the outer expectation as a constant. Our ability to make this split relies on probability chain rule. Mathematically:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\underE{A,B}{f(A,B)} &amp;= \int_{A,B} P(A,B) f(A,B) \\
+&amp;= \int_{A} \int_B P(B|A) P(A) f(A,B) \\
+&amp;= \int_A P(A) \int_B P(B|A) f(A,B) \\
+&amp;= \int_A P(A) \underE{B}{f(A,B) \Big| A} \\
+&amp;= \underE{A}{\underE{B}{f(A,B) \Big| A} }\end{split}\]</div>
+<p>An expectation over <span class="math notranslate nohighlight">\(s_t, a_t, s_{t'}, a_{t'}, s_{t'+1}\)</span> can thus be expressed by</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\underE{\tau \sim \pi_{\theta}}{f(t,t')} &amp;= \underE{s_t, a_t, s_{t'}, a_{t'}, s_{t'+1} \sim \pi_{\theta}}{f(t,t')} \\
+&amp;= \underE{s_{t'}, a_{t'}, s_{t'+1} \sim \pi_{\theta}}{\underE{s_t, a_t \sim \pi_{\theta}}{f(t,t') \Big| s_{t'}, a_{t'}, s_{t'+1}}}\end{split}\]</div>
+<p><strong>4. Constants Can Be Pulled Outside of Expectations.</strong> If a term inside an expectation is constant with respect to the variable being expected over, it can be pulled outside of the expectation. To give an example, consider again an expectation over two random variables <span class="math notranslate nohighlight">\(A\)</span> and <span class="math notranslate nohighlight">\(B\)</span>, where this time, <span class="math notranslate nohighlight">\(f(A,B) = h(A) g(B)\)</span>. Then, using the result from before:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\underE{A,B}{f(A,B)} &amp;= \underE{A}{\underE{B}{f(A,B) \Big| A}} \\
+&amp;= \underE{A}{\underE{B}{h(A) g(B) \Big| A}}\\
+&amp;= \underE{A}{h(A) \underE{B}{g(B) \Big| A}}.\end{split}\]</div>
+<p>The function in our expectation decomposes this way, allowing us to write:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\underE{\tau \sim \pi_{\theta}}{f(t,t')} &amp;= \underE{s_{t'}, a_{t'}, s_{t'+1} \sim \pi_{\theta}}{\underE{s_t, a_t \sim \pi_{\theta}}{f(t,t') \Big| s_{t'}, a_{t'}, s_{t'+1}}} \\
+&amp;= \underE{s_{t'}, a_{t'}, s_{t'+1} \sim \pi_{\theta}}{\underE{s_t, a_t \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t |s_t) R(s_{t'}, a_{t'}, s_{t'+1}) \Big| s_{t'}, a_{t'}, s_{t'+1}}} \\
+&amp;= \underE{s_{t'}, a_{t'}, s_{t'+1} \sim \pi_{\theta}}{R(s_{t'}, a_{t'}, s_{t'+1})  \underE{s_t, a_t \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \Big| s_{t'}, a_{t'}, s_{t'+1}}}.\end{split}\]</div>
+<p><strong>5. Applying the EGLP Lemma.</strong> The last step in our proof relies on the <a class="reference external" href="../spinningup/rl_intro3.html#expected-grad-log-prob-lemma">EGLP lemma</a>. At this point, we will only worry about the innermost expectation,</p>
+<div class="math notranslate nohighlight">
+\[\underE{s_t, a_t \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \Big| s_{t'}, a_{t'}, s_{t'+1}} = \int_{s_t, a_t} P(s_t, a_t | \pi_{\theta}, s_{t'}, a_{t'}, s_{t'+1}) \nabla_{\theta} \log \pi_{\theta}(a_t |s_t).\]</div>
+<p>We now have to make a distinction between two cases: <span class="math notranslate nohighlight">\(t' &lt; t\)</span>, the case where the reward happened before the action, and <span class="math notranslate nohighlight">\(t' \geq t\)</span>, where it didn’t.</p>
+<p><strong>Case One: Reward Before Action.</strong> If <span class="math notranslate nohighlight">\(t' &lt; t\)</span>, then the conditional probabilities for actions at <span class="math notranslate nohighlight">\(a_t\)</span> come from the policy:</p>
+<div class="math notranslate nohighlight">
+\[P(s_t, a_t | \pi_{\theta}, s_{t'}, a_{t'}, s_{t'+1}) &amp;= \pi_{\theta}(a_t | s_t) P(s_t | \pi_{\theta}, s_{t'}, a_{t'}, s_{t'+1}),\]</div>
+<p>the innermost expectation can be broken down farther into</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\underE{s_t, a_t \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \Big| s_{t'}, a_{t'}, s_{t'+1}} &amp;= \int_{s_t, a_t} P(s_t, a_t | \pi_{\theta}, s_{t'}, a_{t'}, s_{t'+1}) \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \\
+&amp;= \int_{s_t} P(s_t | \pi_{\theta}, s_{t'}, a_{t'}, s_{t'+1}) \int_{a_t} \pi_{\theta}(a_t | s_t) \nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \\
+&amp;= \underE{s_t \sim \pi_{\theta}}{ \underE{a_t \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \Big| s_t } \Big| s_{t'}, a_{t'}, s_{t'+1}}.\end{split}\]</div>
+<p>The EGLP lemma says that</p>
+<div class="math notranslate nohighlight">
+\[\underE{a_t \sim \pi_{\theta}}{\nabla_{\theta} \log \pi_{\theta}(a_t |s_t) \Big| s_t } = 0,\]</div>
+<p>allowing us to conclude that for <span class="math notranslate nohighlight">\(t' &lt; t\)</span>, <span class="math notranslate nohighlight">\(\underE{\tau \sim \pi_{\theta}}{f(t,t')} = 0\)</span>.</p>
+<p><strong>Case Two: Reward After Action.</strong> What about the <span class="math notranslate nohighlight">\(t' \geq t\)</span> case, though? Why doesn’t the same logic apply? In this case, the conditional probabilities for <span class="math notranslate nohighlight">\(a_t\)</span> can’t be broken down the same way, because you’re conditioning <strong>on the future.</strong> Think about it like this: let’s say that every day, in the morning, you make a choice between going for a jog and going to work early, and you have a 50-50 chance of each option. If you condition on a future where you went to work early, what are the odds that you went for a jog? Clearly, you didn’t. But if you’re conditioning on the past—before you made the decision—what are the odds that you will later go for a jog? Now it’s back to 50-50.</p>
+<p>So in the case where <span class="math notranslate nohighlight">\(t' \geq t\)</span>, the conditional distribution over actions <span class="math notranslate nohighlight">\(a_t\)</span> is <strong>not</strong> <span class="math notranslate nohighlight">\(\pi(a_t|s_t)\)</span>, and the EGLP lemma does not apply.</p>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../../index.html">multi-agent-market-rl</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../MultiAgentMarketRL.html">Multi-Agent-Market-RL</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Benjamin Suter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../../_sources/submodules/spinningup-rl-tutorial/docs/spinningup/extra_pg_proof1.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

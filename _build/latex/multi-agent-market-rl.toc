@@ -1,0 +1,34 @@
+\select@language {english}
+\contentsline {chapter}{\numberline {1}Installation}{1}{chapter.1}
+\contentsline {chapter}{\numberline {2}Quick guide to using the environment}{3}{chapter.2}
+\contentsline {section}{\numberline {2.1}The agent dictionary}{3}{section.2.1}
+\contentsline {section}{\numberline {2.2}Initialising the environment}{4}{section.2.2}
+\contentsline {section}{\numberline {2.3}Main functionalities of the environment}{6}{section.2.3}
+\contentsline {chapter}{\numberline {3}Quick guide to using the DeepQTrainer}{7}{chapter.3}
+\contentsline {section}{\numberline {3.1}Initialising the DeepQTrainer}{7}{section.3.1}
+\contentsline {section}{\numberline {3.2}Training the agents}{8}{section.3.2}
+\contentsline {section}{\numberline {3.3}Remark on implementing a custom training loop}{8}{section.3.3}
+\contentsline {section}{\numberline {3.4}Further Usage Examples}{9}{section.3.4}
+\contentsline {chapter}{\numberline {4}Documentation of the code}{11}{chapter.4}
+\contentsline {section}{\numberline {4.1}A quick overview}{11}{section.4.1}
+\contentsline {section}{\numberline {4.2}The Agent Module}{12}{section.4.2}
+\contentsline {subsection}{\numberline {4.2.1}Ready to use agents}{13}{subsection.4.2.1}
+\contentsline {subsection}{\numberline {4.2.2}Creating your custom agent}{13}{subsection.4.2.2}
+\contentsline {section}{\numberline {4.3}The Market Module}{15}{section.4.3}
+\contentsline {subsection}{\numberline {4.3.1}Ready to use market engines}{15}{subsection.4.3.1}
+\contentsline {subsection}{\numberline {4.3.2}Creating your custom engine}{15}{subsection.4.3.2}
+\contentsline {section}{\numberline {4.4}The Information Setting Module}{16}{section.4.4}
+\contentsline {subsection}{\numberline {4.4.1}Ready to use information settings}{16}{subsection.4.4.1}
+\contentsline {subsection}{\numberline {4.4.2}Creating your custom information setting}{16}{subsection.4.4.2}
+\contentsline {section}{\numberline {4.5}The Exploration Setting Module}{17}{section.4.5}
+\contentsline {subsection}{\numberline {4.5.1}Ready to use exploration settings}{17}{subsection.4.5.1}
+\contentsline {subsection}{\numberline {4.5.2}Creating your custom exploration setting}{17}{subsection.4.5.2}
+\contentsline {section}{\numberline {4.6}The Reward Setting Module}{18}{section.4.6}
+\contentsline {subsection}{\numberline {4.6.1}Ready to use reward settings}{18}{subsection.4.6.1}
+\contentsline {subsection}{\numberline {4.6.2}Creating your custom reward setting}{18}{subsection.4.6.2}
+\contentsline {section}{\numberline {4.7}The Neural Network Model Module}{19}{section.4.7}
+\contentsline {subsection}{\numberline {4.7.1}Ready to use network models}{19}{subsection.4.7.1}
+\contentsline {subsection}{\numberline {4.7.2}Creating your custom neural network}{19}{subsection.4.7.2}
+\contentsline {section}{\numberline {4.8}Raw module functions}{20}{section.4.8}
+\contentsline {chapter}{Python Module Index}{31}{section*.117}
+\contentsline {chapter}{Index}{33}{section*.118}

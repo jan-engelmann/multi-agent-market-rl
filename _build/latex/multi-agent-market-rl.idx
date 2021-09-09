@@ -1,0 +1,123 @@
+\indexentry{module@\spxentry{module}!agents@\spxentry{agents}|hyperpage}{20}
+\indexentry{agents@\spxentry{agents}!module@\spxentry{module}|hyperpage}{20}
+\indexentry{AgentSetting (class in agents)@\spxentry{AgentSetting}\spxextra{class in agents}|hyperpage}{20}
+\indexentry{\_\_init\_\_() (agents.AgentSetting method)@\spxentry{\_\_init\_\_()}\spxextra{agents.AgentSetting method}|hyperpage}{20}
+\indexentry{get\_action() (agents.AgentSetting method)@\spxentry{get\_action()}\spxextra{agents.AgentSetting method}|hyperpage}{20}
+\indexentry{get\_q\_value() (agents.AgentSetting method)@\spxentry{get\_q\_value()}\spxextra{agents.AgentSetting method}|hyperpage}{20}
+\indexentry{get\_target() (agents.AgentSetting method)@\spxentry{get\_target()}\spxextra{agents.AgentSetting method}|hyperpage}{20}
+\indexentry{random\_action() (agents.AgentSetting method)@\spxentry{random\_action()}\spxextra{agents.AgentSetting method}|hyperpage}{20}
+\indexentry{reset\_target\_network() (agents.AgentSetting method)@\spxentry{reset\_target\_network()}\spxextra{agents.AgentSetting method}|hyperpage}{20}
+\indexentry{save\_model\_weights() (agents.AgentSetting method)@\spxentry{save\_model\_weights()}\spxextra{agents.AgentSetting method}|hyperpage}{20}
+\indexentry{ConstAgent (class in agents)@\spxentry{ConstAgent}\spxextra{class in agents}|hyperpage}{20}
+\indexentry{ConstAgent.Optimizer (class in agents)@\spxentry{ConstAgent.Optimizer}\spxextra{class in agents}|hyperpage}{20}
+\indexentry{\_\_init\_\_() (agents.ConstAgent.Optimizer method)@\spxentry{\_\_init\_\_()}\spxextra{agents.ConstAgent.Optimizer method}|hyperpage}{20}
+\indexentry{step() (agents.ConstAgent.Optimizer method)@\spxentry{step()}\spxextra{agents.ConstAgent.Optimizer method}|hyperpage}{20}
+\indexentry{zero\_grad() (agents.ConstAgent.Optimizer method)@\spxentry{zero\_grad()}\spxextra{agents.ConstAgent.Optimizer method}|hyperpage}{20}
+\indexentry{\_\_init\_\_() (agents.ConstAgent method)@\spxentry{\_\_init\_\_()}\spxextra{agents.ConstAgent method}|hyperpage}{20}
+\indexentry{get\_action() (agents.ConstAgent method)@\spxentry{get\_action()}\spxextra{agents.ConstAgent method}|hyperpage}{20}
+\indexentry{get\_q\_value() (agents.ConstAgent method)@\spxentry{get\_q\_value()}\spxextra{agents.ConstAgent method}|hyperpage}{21}
+\indexentry{get\_target() (agents.ConstAgent method)@\spxentry{get\_target()}\spxextra{agents.ConstAgent method}|hyperpage}{21}
+\indexentry{random\_action() (agents.ConstAgent method)@\spxentry{random\_action()}\spxextra{agents.ConstAgent method}|hyperpage}{21}
+\indexentry{reset\_target\_network() (agents.ConstAgent method)@\spxentry{reset\_target\_network()}\spxextra{agents.ConstAgent method}|hyperpage}{21}
+\indexentry{save\_model\_weights() (agents.ConstAgent method)@\spxentry{save\_model\_weights()}\spxextra{agents.ConstAgent method}|hyperpage}{21}
+\indexentry{DQNAgent (class in agents)@\spxentry{DQNAgent}\spxextra{class in agents}|hyperpage}{21}
+\indexentry{\_\_init\_\_() (agents.DQNAgent method)@\spxentry{\_\_init\_\_()}\spxextra{agents.DQNAgent method}|hyperpage}{21}
+\indexentry{get\_action() (agents.DQNAgent method)@\spxentry{get\_action()}\spxextra{agents.DQNAgent method}|hyperpage}{21}
+\indexentry{get\_q\_value() (agents.DQNAgent method)@\spxentry{get\_q\_value()}\spxextra{agents.DQNAgent method}|hyperpage}{21}
+\indexentry{get\_target() (agents.DQNAgent method)@\spxentry{get\_target()}\spxextra{agents.DQNAgent method}|hyperpage}{22}
+\indexentry{random\_action() (agents.DQNAgent method)@\spxentry{random\_action()}\spxextra{agents.DQNAgent method}|hyperpage}{22}
+\indexentry{reset\_target\_network() (agents.DQNAgent method)@\spxentry{reset\_target\_network()}\spxextra{agents.DQNAgent method}|hyperpage}{22}
+\indexentry{save\_model\_weights() (agents.DQNAgent method)@\spxentry{save\_model\_weights()}\spxextra{agents.DQNAgent method}|hyperpage}{22}
+\indexentry{HumanReplayAgent (class in agents)@\spxentry{HumanReplayAgent}\spxextra{class in agents}|hyperpage}{22}
+\indexentry{HumanReplayAgent.Optimizer (class in agents)@\spxentry{HumanReplayAgent.Optimizer}\spxextra{class in agents}|hyperpage}{22}
+\indexentry{\_\_init\_\_() (agents.HumanReplayAgent.Optimizer method)@\spxentry{\_\_init\_\_()}\spxextra{agents.HumanReplayAgent.Optimizer method}|hyperpage}{22}
+\indexentry{step() (agents.HumanReplayAgent.Optimizer method)@\spxentry{step()}\spxextra{agents.HumanReplayAgent.Optimizer method}|hyperpage}{22}
+\indexentry{zero\_grad() (agents.HumanReplayAgent.Optimizer method)@\spxentry{zero\_grad()}\spxextra{agents.HumanReplayAgent.Optimizer method}|hyperpage}{22}
+\indexentry{\_\_init\_\_() (agents.HumanReplayAgent method)@\spxentry{\_\_init\_\_()}\spxextra{agents.HumanReplayAgent method}|hyperpage}{22}
+\indexentry{get\_action() (agents.HumanReplayAgent method)@\spxentry{get\_action()}\spxextra{agents.HumanReplayAgent method}|hyperpage}{23}
+\indexentry{get\_q\_value() (agents.HumanReplayAgent method)@\spxentry{get\_q\_value()}\spxextra{agents.HumanReplayAgent method}|hyperpage}{23}
+\indexentry{get\_target() (agents.HumanReplayAgent method)@\spxentry{get\_target()}\spxextra{agents.HumanReplayAgent method}|hyperpage}{23}
+\indexentry{random\_action() (agents.HumanReplayAgent method)@\spxentry{random\_action()}\spxextra{agents.HumanReplayAgent method}|hyperpage}{23}
+\indexentry{reset\_target\_network() (agents.HumanReplayAgent method)@\spxentry{reset\_target\_network()}\spxextra{agents.HumanReplayAgent method}|hyperpage}{23}
+\indexentry{save\_model\_weights() (agents.HumanReplayAgent method)@\spxentry{save\_model\_weights()}\spxextra{agents.HumanReplayAgent method}|hyperpage}{23}
+\indexentry{module@\spxentry{module}!network\_models@\spxentry{network\_models}|hyperpage}{23}
+\indexentry{network\_models@\spxentry{network\_models}!module@\spxentry{module}|hyperpage}{23}
+\indexentry{NetworkSetting (class in network\_models)@\spxentry{NetworkSetting}\spxextra{class in network\_models}|hyperpage}{23}
+\indexentry{\_\_init\_\_() (network\_models.NetworkSetting method)@\spxentry{\_\_init\_\_()}\spxextra{network\_models.NetworkSetting method}|hyperpage}{23}
+\indexentry{define\_network() (network\_models.NetworkSetting method)@\spxentry{define\_network()}\spxextra{network\_models.NetworkSetting method}|hyperpage}{23}
+\indexentry{get\_network() (network\_models.NetworkSetting method)@\spxentry{get\_network()}\spxextra{network\_models.NetworkSetting method}|hyperpage}{23}
+\indexentry{SimpleExampleNetwork (class in network\_models)@\spxentry{SimpleExampleNetwork}\spxextra{class in network\_models}|hyperpage}{23}
+\indexentry{\_\_init\_\_() (network\_models.SimpleExampleNetwork method)@\spxentry{\_\_init\_\_()}\spxextra{network\_models.SimpleExampleNetwork method}|hyperpage}{23}
+\indexentry{define\_network() (network\_models.SimpleExampleNetwork method)@\spxentry{define\_network()}\spxextra{network\_models.SimpleExampleNetwork method}|hyperpage}{24}
+\indexentry{get\_network() (network\_models.SimpleExampleNetwork method)@\spxentry{get\_network()}\spxextra{network\_models.SimpleExampleNetwork method}|hyperpage}{24}
+\indexentry{module@\spxentry{module}!info\_setting@\spxentry{info\_setting}|hyperpage}{24}
+\indexentry{info\_setting@\spxentry{info\_setting}!module@\spxentry{module}|hyperpage}{24}
+\indexentry{BlackBoxSetting (class in info\_setting)@\spxentry{BlackBoxSetting}\spxextra{class in info\_setting}|hyperpage}{24}
+\indexentry{\_\_init\_\_() (info\_setting.BlackBoxSetting method)@\spxentry{\_\_init\_\_()}\spxextra{info\_setting.BlackBoxSetting method}|hyperpage}{24}
+\indexentry{get\_states() (info\_setting.BlackBoxSetting method)@\spxentry{get\_states()}\spxextra{info\_setting.BlackBoxSetting method}|hyperpage}{24}
+\indexentry{DealInformationSetting (class in info\_setting)@\spxentry{DealInformationSetting}\spxextra{class in info\_setting}|hyperpage}{24}
+\indexentry{\_\_init\_\_() (info\_setting.DealInformationSetting method)@\spxentry{\_\_init\_\_()}\spxextra{info\_setting.DealInformationSetting method}|hyperpage}{24}
+\indexentry{get\_states() (info\_setting.DealInformationSetting method)@\spxentry{get\_states()}\spxextra{info\_setting.DealInformationSetting method}|hyperpage}{24}
+\indexentry{InformationSetting (class in info\_setting)@\spxentry{InformationSetting}\spxextra{class in info\_setting}|hyperpage}{24}
+\indexentry{\_\_init\_\_() (info\_setting.InformationSetting method)@\spxentry{\_\_init\_\_()}\spxextra{info\_setting.InformationSetting method}|hyperpage}{24}
+\indexentry{get\_states() (info\_setting.InformationSetting method)@\spxentry{get\_states()}\spxextra{info\_setting.InformationSetting method}|hyperpage}{24}
+\indexentry{OfferInformationSetting (class in info\_setting)@\spxentry{OfferInformationSetting}\spxextra{class in info\_setting}|hyperpage}{25}
+\indexentry{\_\_init\_\_() (info\_setting.OfferInformationSetting method)@\spxentry{\_\_init\_\_()}\spxextra{info\_setting.OfferInformationSetting method}|hyperpage}{25}
+\indexentry{get\_states() (info\_setting.OfferInformationSetting method)@\spxentry{get\_states()}\spxextra{info\_setting.OfferInformationSetting method}|hyperpage}{25}
+\indexentry{TimeInformationWrapper (class in info\_setting)@\spxentry{TimeInformationWrapper}\spxextra{class in info\_setting}|hyperpage}{25}
+\indexentry{\_\_init\_\_() (info\_setting.TimeInformationWrapper method)@\spxentry{\_\_init\_\_()}\spxextra{info\_setting.TimeInformationWrapper method}|hyperpage}{25}
+\indexentry{get\_states() (info\_setting.TimeInformationWrapper method)@\spxentry{get\_states()}\spxextra{info\_setting.TimeInformationWrapper method}|hyperpage}{25}
+\indexentry{module@\spxentry{module}!exploration\_setting@\spxentry{exploration\_setting}|hyperpage}{25}
+\indexentry{exploration\_setting@\spxentry{exploration\_setting}!module@\spxentry{module}|hyperpage}{25}
+\indexentry{ExplorationSetting (class in exploration\_setting)@\spxentry{ExplorationSetting}\spxextra{class in exploration\_setting}|hyperpage}{25}
+\indexentry{\_\_init\_\_() (exploration\_setting.ExplorationSetting method)@\spxentry{\_\_init\_\_()}\spxextra{exploration\_setting.ExplorationSetting method}|hyperpage}{25}
+\indexentry{update() (exploration\_setting.ExplorationSetting method)@\spxentry{update()}\spxextra{exploration\_setting.ExplorationSetting method}|hyperpage}{25}
+\indexentry{LinearExplorationDecline (class in exploration\_setting)@\spxentry{LinearExplorationDecline}\spxextra{class in exploration\_setting}|hyperpage}{25}
+\indexentry{\_\_init\_\_() (exploration\_setting.LinearExplorationDecline method)@\spxentry{\_\_init\_\_()}\spxextra{exploration\_setting.LinearExplorationDecline method}|hyperpage}{25}
+\indexentry{reset() (exploration\_setting.LinearExplorationDecline method)@\spxentry{reset()}\spxextra{exploration\_setting.LinearExplorationDecline method}|hyperpage}{25}
+\indexentry{update() (exploration\_setting.LinearExplorationDecline method)@\spxentry{update()}\spxextra{exploration\_setting.LinearExplorationDecline method}|hyperpage}{25}
+\indexentry{module@\spxentry{module}!reward\_setting@\spxentry{reward\_setting}|hyperpage}{26}
+\indexentry{reward\_setting@\spxentry{reward\_setting}!module@\spxentry{module}|hyperpage}{26}
+\indexentry{NoDealPenaltyReward (class in reward\_setting)@\spxentry{NoDealPenaltyReward}\spxextra{class in reward\_setting}|hyperpage}{26}
+\indexentry{\_\_init\_\_() (reward\_setting.NoDealPenaltyReward method)@\spxentry{\_\_init\_\_()}\spxextra{reward\_setting.NoDealPenaltyReward method}|hyperpage}{26}
+\indexentry{buyer\_reward() (reward\_setting.NoDealPenaltyReward method)@\spxentry{buyer\_reward()}\spxextra{reward\_setting.NoDealPenaltyReward method}|hyperpage}{26}
+\indexentry{seller\_reward() (reward\_setting.NoDealPenaltyReward method)@\spxentry{seller\_reward()}\spxextra{reward\_setting.NoDealPenaltyReward method}|hyperpage}{26}
+\indexentry{RewardSetting (class in reward\_setting)@\spxentry{RewardSetting}\spxextra{class in reward\_setting}|hyperpage}{26}
+\indexentry{\_\_init\_\_() (reward\_setting.RewardSetting method)@\spxentry{\_\_init\_\_()}\spxextra{reward\_setting.RewardSetting method}|hyperpage}{26}
+\indexentry{buyer\_reward() (reward\_setting.RewardSetting method)@\spxentry{buyer\_reward()}\spxextra{reward\_setting.RewardSetting method}|hyperpage}{26}
+\indexentry{seller\_reward() (reward\_setting.RewardSetting method)@\spxentry{seller\_reward()}\spxextra{reward\_setting.RewardSetting method}|hyperpage}{26}
+\indexentry{module@\spxentry{module}!environment@\spxentry{environment}|hyperpage}{26}
+\indexentry{environment@\spxentry{environment}!module@\spxentry{module}|hyperpage}{26}
+\indexentry{MultiAgentEnvironment (class in environment)@\spxentry{MultiAgentEnvironment}\spxextra{class in environment}|hyperpage}{26}
+\indexentry{\_\_init\_\_() (environment.MultiAgentEnvironment method)@\spxentry{\_\_init\_\_()}\spxextra{environment.MultiAgentEnvironment method}|hyperpage}{26}
+\indexentry{calculate\_rewards() (environment.MultiAgentEnvironment method)@\spxentry{calculate\_rewards()}\spxextra{environment.MultiAgentEnvironment method}|hyperpage}{27}
+\indexentry{get\_actions() (environment.MultiAgentEnvironment method)@\spxentry{get\_actions()}\spxextra{environment.MultiAgentEnvironment method}|hyperpage}{27}
+\indexentry{reset() (environment.MultiAgentEnvironment method)@\spxentry{reset()}\spxextra{environment.MultiAgentEnvironment method}|hyperpage}{27}
+\indexentry{step() (environment.MultiAgentEnvironment method)@\spxentry{step()}\spxextra{environment.MultiAgentEnvironment method}|hyperpage}{27}
+\indexentry{store\_observations() (environment.MultiAgentEnvironment method)@\spxentry{store\_observations()}\spxextra{environment.MultiAgentEnvironment method}|hyperpage}{27}
+\indexentry{generate\_agents() (in module environment)@\spxentry{generate\_agents()}\spxextra{in module environment}|hyperpage}{27}
+\indexentry{get\_agent\_actions() (in module environment)@\spxentry{get\_agent\_actions()}\spxextra{in module environment}|hyperpage}{27}
+\indexentry{get\_basic\_agent\_info() (in module environment)@\spxentry{get\_basic\_agent\_info()}\spxextra{in module environment}|hyperpage}{27}
+\indexentry{module@\spxentry{module}!markets@\spxentry{markets}|hyperpage}{27}
+\indexentry{markets@\spxentry{markets}!module@\spxentry{module}|hyperpage}{27}
+\indexentry{BaseMarketEngine (class in markets)@\spxentry{BaseMarketEngine}\spxextra{class in markets}|hyperpage}{27}
+\indexentry{\_\_init\_\_() (markets.BaseMarketEngine method)@\spxentry{\_\_init\_\_()}\spxextra{markets.BaseMarketEngine method}|hyperpage}{27}
+\indexentry{calculate\_deals() (markets.BaseMarketEngine method)@\spxentry{calculate\_deals()}\spxextra{markets.BaseMarketEngine method}|hyperpage}{28}
+\indexentry{reset() (markets.BaseMarketEngine method)@\spxentry{reset()}\spxextra{markets.BaseMarketEngine method}|hyperpage}{28}
+\indexentry{step() (markets.BaseMarketEngine method)@\spxentry{step()}\spxextra{markets.BaseMarketEngine method}|hyperpage}{28}
+\indexentry{MarketMatchHiLo (class in markets)@\spxentry{MarketMatchHiLo}\spxextra{class in markets}|hyperpage}{28}
+\indexentry{\_\_init\_\_() (markets.MarketMatchHiLo method)@\spxentry{\_\_init\_\_()}\spxextra{markets.MarketMatchHiLo method}|hyperpage}{28}
+\indexentry{calculate\_deals() (markets.MarketMatchHiLo method)@\spxentry{calculate\_deals()}\spxextra{markets.MarketMatchHiLo method}|hyperpage}{28}
+\indexentry{reset() (markets.MarketMatchHiLo method)@\spxentry{reset()}\spxextra{markets.MarketMatchHiLo method}|hyperpage}{28}
+\indexentry{step() (markets.MarketMatchHiLo method)@\spxentry{step()}\spxextra{markets.MarketMatchHiLo method}|hyperpage}{28}
+\indexentry{module@\spxentry{module}!trainer@\spxentry{trainer}|hyperpage}{28}
+\indexentry{trainer@\spxentry{trainer}!module@\spxentry{module}|hyperpage}{28}
+\indexentry{DeepQTrainer (class in trainer)@\spxentry{DeepQTrainer}\spxextra{class in trainer}|hyperpage}{28}
+\indexentry{\_\_init\_\_() (trainer.DeepQTrainer method)@\spxentry{\_\_init\_\_()}\spxextra{trainer.DeepQTrainer method}|hyperpage}{28}
+\indexentry{generate\_Q\_targets() (trainer.DeepQTrainer method)@\spxentry{generate\_Q\_targets()}\spxextra{trainer.DeepQTrainer method}|hyperpage}{29}
+\indexentry{generate\_Q\_values() (trainer.DeepQTrainer method)@\spxentry{generate\_Q\_values()}\spxextra{trainer.DeepQTrainer method}|hyperpage}{29}
+\indexentry{get\_agent\_Q\_target() (trainer.DeepQTrainer static method)@\spxentry{get\_agent\_Q\_target()}\spxextra{trainer.DeepQTrainer static method}|hyperpage}{29}
+\indexentry{get\_agent\_Q\_values() (trainer.DeepQTrainer static method)@\spxentry{get\_agent\_Q\_values()}\spxextra{trainer.DeepQTrainer static method}|hyperpage}{29}
+\indexentry{mse\_loss() (trainer.DeepQTrainer method)@\spxentry{mse\_loss()}\spxextra{trainer.DeepQTrainer method}|hyperpage}{30}
+\indexentry{set\_replay\_buffer() (trainer.DeepQTrainer method)@\spxentry{set\_replay\_buffer()}\spxextra{trainer.DeepQTrainer method}|hyperpage}{30}
+\indexentry{train() (trainer.DeepQTrainer method)@\spxentry{train()}\spxextra{trainer.DeepQTrainer method}|hyperpage}{30}

@@ -1,0 +1,97 @@
+Multi-Agent-Market-RL
+***************************
+Documentation of the code
+=========================
+A quick overview
+################
+The Multi-Agent-Market is setup in the following way::
+
+The environment:
+###############
+The environment module connects all other modules to creat a working engine. It starts by initialising all needed
+settings. These consist of all the *agents*, the *market*, the *information setting*, the *exploration setting* and the
+*reward setting*. In addition further initialisation settings can be defined in an optional keyword argument dictionary.
+A detailed explanation of all the environment arguments will be provided in ...
+
+After initialising all agents and settings, the environment takes care of computing a single time step in the market
+environment. This consists of getting all current observations, computing all agent actions, computing all the deals
+which got realized at the current time step *t* as well as the associated rewards.
+
+*Side note: The realised deals will depend on the market setting and the achieved rewards will depend on the
+reward setting*.
+
+At the end of each time step *t*, the environment will return the current observations, the
+current actions, the current rewards and the current agent status (done or active) of all agents at the time step
+*t* as well as the next observations of all agents at time step *t+1*. In addition the environment returns a flag
+indicating if the game has finished.
+
+For more detail on the environment see....
+
+The market:
+###########
+The market engine is in charge of computing all realized deals at the current time step *t*.
+Currently only the .. py:class:: MarketMatchHiLo is implemented. This market engine calculates deals by matching the
+highest buying offer with the lowest selling offer. The actual deal price is then taken as the mean value between the
+matches buying offer and selling offer.
+
+For more details on the market and how to build a custom market engine see....
+
+The agents:
+###########
+The .. py:class:: AgentSetting is an abstract base class for all agents. It takes care of initialising the role and
+reservation price as well as the action space of each agent. Again, custom agents can be created by adding classes
+overwriting specific methods of the .. py:class:: AgentSetting.
+
+For more detail on how to create your custom agent, see....
+
+Currently the following agents are already implemented::
+    * .. py:class:: DQNAgent
+        This agent makes use of an artificial neural network in order to learn an optimal Q-function. This is achieved
+        by making use of experience replay. The Q-Network is then iteratively updated using randomly selected experience
+        minibatches.
+    * .. py:class:: HumanReplayAgent
+        This agent replays data gathered from human experiments. All data is obtained from the "Trading-in-a-Black-Box"
+        repository --> https://github.com/ikicab/Trading-in-a-Black-Box/tree/f9d05b1a83882d41610638b0ceecfbb51cb05a85
+    * .. py:class:: ConstAgent
+        This agent will always perform the same action.
+
+For more detail on the implemented agents see....
+
+The info setting
+################
+The information setting dictates how much information agents get before deciding on an action. Currently all agents
+always have access to the same amount of information.
+
+Currently the following information settings are implemented::
+    * .. py:class:: BlackBoxSetting
+        Every agent is aware of only its own last offer
+    * .. py:class:: OfferInformationSetting
+        Every agent is aware of the best N offers of either side (buyer and seller) of the last round.
+    * .. py:class:: DealInformationSetting
+        Every agent is aware of N deals of the last round
+    * .. py:class:: TimeInformationWrapper
+        Wrapper to include the current in game time in the observation.
+
+Custom observation settings can be implemented by overwriting the .. py:class:: InformationSetting base class.
+For more detail on implementing observation settings see.....
+
+The exploration setting
+#######################
+The exploration setting determines the evolution of the probability that an agent will perform a random action (perform
+exploratory actions). All agents will make use of the same exploration setting.
+
+Currently the following exploration setting is implemented::
+    * .. py:class:: LinearExplorationDecline
+        Exploration probability declines linearly from an initial staring value down to a final value over the cors of
+        n steps.
+
+The reward setting
+##################
+Calculates the reward achieved by a given agent after closing a deal
+
+Currently the following reward setting is implemented::
+    * .. py:class:: NoDealPenaltyReward
+        Reward achieved by sellers is given by the difference of the deal and the reservation price of the seller. For
+        buyers the reward is given buy the difference of the reservation and the deal price. In addition, buyers who
+        spent more then N in game time steps without making a deal will receive a linearly increasing penalty (negative
+        reward).

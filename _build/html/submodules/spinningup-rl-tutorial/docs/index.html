@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Welcome to Spinning Up in Deep RL! &#8212; multi-agent-market-rl 26.7.21 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/alabaster.css" />
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="welcome-to-spinning-up-in-deep-rl">
+<h1>Welcome to Spinning Up in Deep RL!<a class="headerlink" href="#welcome-to-spinning-up-in-deep-rl" title="Permalink to this headline">¶</a></h1>
+<img alt="../../../_images/spinning-up-in-rl.png" src="../../../_images/spinning-up-in-rl.png" />
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">User Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="user/introduction.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user/introduction.html#what-this-is">What This Is</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/introduction.html#why-we-built-this">Why We Built This</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/introduction.html#how-this-serves-our-mission">How This Serves Our Mission</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/introduction.html#code-design-philosophy">Code Design Philosophy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/introduction.html#long-term-support-and-support-history">Long-Term Support and Support History</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user/installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user/installation.html#installing-python">Installing Python</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/installation.html#installing-openmpi">Installing OpenMPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/installation.html#installing-spinning-up">Installing Spinning Up</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/installation.html#check-your-install">Check Your Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/installation.html#installing-mujoco-optional">Installing MuJoCo (Optional)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user/algorithms.html">Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user/algorithms.html#what-s-included">What’s Included</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/algorithms.html#why-these-algorithms">Why These Algorithms?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/algorithms.html#code-format">Code Format</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user/running.html">Running Experiments</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user/running.html#launching-from-the-command-line">Launching from the Command Line</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/running.html#launching-from-scripts">Launching from Scripts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user/saving_and_loading.html">Experiment Outputs</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="user/saving_and_loading.html#algorithm-outputs">Algorithm Outputs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/saving_and_loading.html#save-directory-location">Save Directory Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="user/saving_and_loading.html#loading-and-running-trained-policies">Loading and Running Trained Policies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user/plotting.html">Plotting Results</a></li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Introduction to RL</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="spinningup/rl_intro.html">Part 1: Key Concepts in RL</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro.html#what-can-rl-do">What Can RL Do?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro.html#key-concepts-and-terminology">Key Concepts and Terminology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro.html#optional-formalism">(Optional) Formalism</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spinningup/rl_intro2.html">Part 2: Kinds of RL Algorithms</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro2.html#a-taxonomy-of-rl-algorithms">A Taxonomy of RL Algorithms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro2.html#links-to-algorithms-in-taxonomy">Links to Algorithms in Taxonomy</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spinningup/rl_intro3.html">Part 3: Intro to Policy Optimization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro3.html#deriving-the-simplest-policy-gradient">Deriving the Simplest Policy Gradient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro3.html#implementing-the-simplest-policy-gradient">Implementing the Simplest Policy Gradient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro3.html#expected-grad-log-prob-lemma">Expected Grad-Log-Prob Lemma</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro3.html#don-t-let-the-past-distract-you">Don’t Let the Past Distract You</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro3.html#implementing-reward-to-go-policy-gradient">Implementing Reward-to-Go Policy Gradient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro3.html#baselines-in-policy-gradients">Baselines in Policy Gradients</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro3.html#other-forms-of-the-policy-gradient">Other Forms of the Policy Gradient</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/rl_intro3.html#recap">Recap</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Resources</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="spinningup/spinningup.html">Spinning Up as a Deep RL Researcher</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/spinningup.html#the-right-background">The Right Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/spinningup.html#learn-by-doing">Learn by Doing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/spinningup.html#developing-a-research-project">Developing a Research Project</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/spinningup.html#doing-rigorous-research-in-rl">Doing Rigorous Research in RL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/spinningup.html#closing-thoughts">Closing Thoughts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/spinningup.html#ps-other-resources">PS: Other Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/spinningup.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spinningup/keypapers.html">Key Papers in Deep RL</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#model-free-rl">1. Model-Free RL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#exploration">2. Exploration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#transfer-and-multitask-rl">3. Transfer and Multitask RL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#hierarchy">4. Hierarchy</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#memory">5. Memory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#model-based-rl">6. Model-Based RL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#meta-rl">7. Meta-RL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#scaling-rl">8. Scaling RL</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#rl-in-the-real-world">9. RL in the Real World</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#safety">10. Safety</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#imitation-learning-and-inverse-reinforcement-learning">11. Imitation Learning and Inverse Reinforcement Learning</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#reproducibility-analysis-and-critique">12. Reproducibility, Analysis, and Critique</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/keypapers.html#bonus-classic-papers-in-rl-theory-or-review">13. Bonus: Classic Papers in RL Theory or Review</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spinningup/exercises.html">Exercises</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/exercises.html#problem-set-1-basics-of-implementation">Problem Set 1: Basics of Implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/exercises.html#problem-set-2-algorithm-failure-modes">Problem Set 2: Algorithm Failure Modes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/exercises.html#challenges">Challenges</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="spinningup/bench.html">Benchmarks for Spinning Up Implementations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/bench.html#performance-in-each-environment">Performance in Each Environment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/bench.html#experiment-details">Experiment Details</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinningup/bench.html#pytorch-vs-tensorflow">PyTorch vs Tensorflow</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Algorithms Docs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="algorithms/vpg.html">Vanilla Policy Gradient</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/vpg.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/vpg.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/vpg.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms/trpo.html">Trust Region Policy Optimization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/trpo.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/trpo.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/trpo.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms/ppo.html">Proximal Policy Optimization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/ppo.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/ppo.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/ppo.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms/ddpg.html">Deep Deterministic Policy Gradient</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/ddpg.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/ddpg.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/ddpg.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms/td3.html">Twin Delayed DDPG</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/td3.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/td3.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/td3.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="algorithms/sac.html">Soft Actor-Critic</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/sac.html#background">Background</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/sac.html#documentation">Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="algorithms/sac.html#references">References</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Utilities Docs</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="utils/logger.html">Logger</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils/logger.html#using-a-logger">Using a Logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/logger.html#logger-classes">Logger Classes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/logger.html#loading-saved-models-pytorch-only">Loading Saved Models (PyTorch Only)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/logger.html#loading-saved-graphs-tensorflow-only">Loading Saved Graphs (Tensorflow Only)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utils/plotter.html">Plotter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils/mpi.html">MPI Tools</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils/mpi.html#core-mpi-utilities">Core MPI Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/mpi.html#mpi-pytorch-utilities">MPI + PyTorch Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/mpi.html#mpi-tensorflow-utilities">MPI + Tensorflow Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="utils/run_utils.html">Run Utils</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="utils/run_utils.html#experimentgrid">ExperimentGrid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils/run_utils.html#calling-experiments">Calling Experiments</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Etc.</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="etc/acknowledgements.html">Acknowledgements</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etc/author.html">About the Author</a></li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../../genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="../../../py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="../../../search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../../index.html">multi-agent-market-rl</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../MultiAgentMarketRL.html">Multi-Agent-Market-RL</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Benjamin Suter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../../../_sources/submodules/spinningup-rl-tutorial/docs/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

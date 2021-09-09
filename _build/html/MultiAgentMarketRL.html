@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Multi-Agent-Market-RL &#8212; multi-agent-market-rl 26.7.21 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="multi-agent-market-rl">
+<h1>Multi-Agent-Market-RL<a class="headerlink" href="#multi-agent-market-rl" title="Permalink to this headline">¶</a></h1>
+<section id="documentation-of-the-code">
+<h2>Documentation of the code<a class="headerlink" href="#documentation-of-the-code" title="Permalink to this headline">¶</a></h2>
+<section id="a-quick-overview">
+<h3>A quick overview<a class="headerlink" href="#a-quick-overview" title="Permalink to this headline">¶</a></h3>
+<p>The Multi-Agent-Market is setup in the following way:</p>
+</section>
+<section id="the-environment">
+<h3>The environment:<a class="headerlink" href="#the-environment" title="Permalink to this headline">¶</a></h3>
+<p>The environment module connects all other modules to creat a working engine. It starts by initialising all needed
+settings. These consist of all the <em>agents</em>, the <em>market</em>, the <em>information setting</em>, the <em>exploration setting</em> and the
+<em>reward setting</em>. In addition further initialisation settings can be defined in an optional keyword argument dictionary.
+A detailed explanation of all the environment arguments will be provided in …</p>
+<p>After initialising all agents and settings, the environment takes care of computing a single time step in the market
+environment. This consists of getting all current observations, computing all agent actions, computing all the deals
+which got realized at the current time step <em>t</em> as well as the associated rewards.</p>
+<p><em>Side note: The realised deals will depend on the market setting and the achieved rewards will depend on the
+reward setting</em>.</p>
+<p>At the end of each time step <em>t</em>, the environment will return the current observations, the
+current actions, the current rewards and the current agent status (done or active) of all agents at the time step
+<em>t</em> as well as the next observations of all agents at time step <em>t+1</em>. In addition the environment returns a flag
+indicating if the game has finished.</p>
+<p>For more detail on the environment see….</p>
+</section>
+<section id="the-market">
+<h3>The market:<a class="headerlink" href="#the-market" title="Permalink to this headline">¶</a></h3>
+<p>The market engine is in charge of computing all realized deals at the current time step <em>t</em>.
+Currently only the .. py:class:: MarketMatchHiLo is implemented. This market engine calculates deals by matching the
+highest buying offer with the lowest selling offer. The actual deal price is then taken as the mean value between the
+matches buying offer and selling offer.</p>
+<p>For more details on the market and how to build a custom market engine see….</p>
+</section>
+<section id="the-agents">
+<h3>The agents:<a class="headerlink" href="#the-agents" title="Permalink to this headline">¶</a></h3>
+<p>The .. py:class:: AgentSetting is an abstract base class for all agents. It takes care of initialising the role and
+reservation price as well as the action space of each agent. Again, custom agents can be created by adding classes
+overwriting specific methods of the .. py:class:: AgentSetting.</p>
+<p>For more detail on how to create your custom agent, see….</p>
+<dl>
+<dt>Currently the following agents are already implemented::</dt><dd><ul>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="DQNAgent">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">DQNAgent</span></span><a class="headerlink" href="#DQNAgent" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">This</span> <span class="pre">agent</span> <span class="pre">makes</span> <span class="pre">use</span> <span class="pre">of</span> <span class="pre">an</span> <span class="pre">artificial</span> <span class="pre">neural</span> <span class="pre">network</span> <span class="pre">in</span> <span class="pre">order</span> <span class="pre">to</span> <span class="pre">learn</span> <span class="pre">an</span> <span class="pre">optimal</span> <span class="pre">Q-function.</span> <span class="pre">This</span> <span class="pre">is</span> <span class="pre">achieved</span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">by</span> <span class="pre">making</span> <span class="pre">use</span> <span class="pre">of</span> <span class="pre">experience</span> <span class="pre">replay.</span> <span class="pre">The</span> <span class="pre">Q-Network</span> <span class="pre">is</span> <span class="pre">then</span> <span class="pre">iteratively</span> <span class="pre">updated</span> <span class="pre">using</span> <span class="pre">randomly</span> <span class="pre">selected</span> <span class="pre">experience</span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">minibatches.</span></span></dt>
+<dd></dd></dl>
+
+</li>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="HumanReplayAgent">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">HumanReplayAgent</span></span><a class="headerlink" href="#HumanReplayAgent" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">This</span> <span class="pre">agent</span> <span class="pre">replays</span> <span class="pre">data</span> <span class="pre">gathered</span> <span class="pre">from</span> <span class="pre">human</span> <span class="pre">experiments.</span> <span class="pre">All</span> <span class="pre">data</span> <span class="pre">is</span> <span class="pre">obtained</span> <span class="pre">from</span> <span class="pre">the</span> <span class="pre">&quot;Trading-in-a-Black-Box&quot;</span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">repository</span> <span class="pre">--&gt;</span> <span class="pre">https://github.com/ikicab/Trading-in-a-Black-Box/tree/f9d05b1a83882d41610638b0ceecfbb51cb05a85</span></span></dt>
+<dd></dd></dl>
+
+</li>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="ConstAgent">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">ConstAgent</span></span><a class="headerlink" href="#ConstAgent" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">This</span> <span class="pre">agent</span> <span class="pre">will</span> <span class="pre">always</span> <span class="pre">perform</span> <span class="pre">the</span> <span class="pre">same</span> <span class="pre">action.</span></span></dt>
+<dd></dd></dl>
+
+</li>
+</ul>
+</dd>
+</dl>
+<p>For more detail on the implemented agents see….</p>
+</section>
+<section id="the-info-setting">
+<h3>The info setting<a class="headerlink" href="#the-info-setting" title="Permalink to this headline">¶</a></h3>
+<p>The information setting dictates how much information agents get before deciding on an action. Currently all agents
+always have access to the same amount of information.</p>
+<dl>
+<dt>Currently the following information settings are implemented::</dt><dd><ul>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="BlackBoxSetting">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">BlackBoxSetting</span></span><a class="headerlink" href="#BlackBoxSetting" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Every</span> <span class="pre">agent</span> <span class="pre">is</span> <span class="pre">aware</span> <span class="pre">of</span> <span class="pre">only</span> <span class="pre">its</span> <span class="pre">own</span> <span class="pre">last</span> <span class="pre">offer</span></span></dt>
+<dd></dd></dl>
+
+</li>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="OfferInformationSetting">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">OfferInformationSetting</span></span><a class="headerlink" href="#OfferInformationSetting" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Every</span> <span class="pre">agent</span> <span class="pre">is</span> <span class="pre">aware</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">best</span> <span class="pre">N</span> <span class="pre">offers</span> <span class="pre">of</span> <span class="pre">either</span> <span class="pre">side</span> <span class="pre">(buyer</span> <span class="pre">and</span> <span class="pre">seller)</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">last</span> <span class="pre">round.</span></span></dt>
+<dd></dd></dl>
+
+</li>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="DealInformationSetting">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">DealInformationSetting</span></span><a class="headerlink" href="#DealInformationSetting" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Every</span> <span class="pre">agent</span> <span class="pre">is</span> <span class="pre">aware</span> <span class="pre">of</span> <span class="pre">N</span> <span class="pre">deals</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">last</span> <span class="pre">round</span></span></dt>
+<dd></dd></dl>
+
+</li>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="TimeInformationWrapper">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">TimeInformationWrapper</span></span><a class="headerlink" href="#TimeInformationWrapper" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Wrapper</span> <span class="pre">to</span> <span class="pre">include</span> <span class="pre">the</span> <span class="pre">current</span> <span class="pre">in</span> <span class="pre">game</span> <span class="pre">time</span> <span class="pre">in</span> <span class="pre">the</span> <span class="pre">observation.</span></span></dt>
+<dd></dd></dl>
+
+</li>
+</ul>
+</dd>
+</dl>
+<p>Custom observation settings can be implemented by overwriting the .. py:class:: InformationSetting base class.
+For more detail on implementing observation settings see…..</p>
+</section>
+<section id="the-exploration-setting">
+<h3>The exploration setting<a class="headerlink" href="#the-exploration-setting" title="Permalink to this headline">¶</a></h3>
+<p>The exploration setting determines the evolution of the probability that an agent will perform a random action (perform
+exploratory actions). All agents will make use of the same exploration setting.</p>
+<dl>
+<dt>Currently the following exploration setting is implemented::</dt><dd><ul>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="LinearExplorationDecline">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">LinearExplorationDecline</span></span><a class="headerlink" href="#LinearExplorationDecline" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Exploration</span> <span class="pre">probability</span> <span class="pre">declines</span> <span class="pre">linearly</span> <span class="pre">from</span> <span class="pre">an</span> <span class="pre">initial</span> <span class="pre">staring</span> <span class="pre">value</span> <span class="pre">down</span> <span class="pre">to</span> <span class="pre">a</span> <span class="pre">final</span> <span class="pre">value</span> <span class="pre">over</span> <span class="pre">the</span> <span class="pre">cors</span> <span class="pre">of</span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">n</span> <span class="pre">steps.</span></span></dt>
+<dd></dd></dl>
+
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+<section id="the-reward-setting">
+<h3>The reward setting<a class="headerlink" href="#the-reward-setting" title="Permalink to this headline">¶</a></h3>
+<p>Calculates the reward achieved by a given agent after closing a deal</p>
+<dl>
+<dt>Currently the following reward setting is implemented::</dt><dd><ul>
+<li><dl class="py class">
+<dt class="sig sig-object py" id="NoDealPenaltyReward">
+<em class="property"><span class="pre">class</span> </em><span class="sig-name descname"><span class="pre">NoDealPenaltyReward</span></span><a class="headerlink" href="#NoDealPenaltyReward" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">Reward</span> <span class="pre">achieved</span> <span class="pre">by</span> <span class="pre">sellers</span> <span class="pre">is</span> <span class="pre">given</span> <span class="pre">by</span> <span class="pre">the</span> <span class="pre">difference</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">deal</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">reservation</span> <span class="pre">price</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">seller.</span> <span class="pre">For</span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">buyers</span> <span class="pre">the</span> <span class="pre">reward</span> <span class="pre">is</span> <span class="pre">given</span> <span class="pre">buy</span> <span class="pre">the</span> <span class="pre">difference</span> <span class="pre">of</span> <span class="pre">the</span> <span class="pre">reservation</span> <span class="pre">and</span> <span class="pre">the</span> <span class="pre">deal</span> <span class="pre">price.</span> <span class="pre">In</span> <span class="pre">addition,</span> <span class="pre">buyers</span> <span class="pre">who</span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">spent</span> <span class="pre">more</span> <span class="pre">then</span> <span class="pre">N</span> <span class="pre">in</span> <span class="pre">game</span> <span class="pre">time</span> <span class="pre">steps</span> <span class="pre">without</span> <span class="pre">making</span> <span class="pre">a</span> <span class="pre">deal</span> <span class="pre">will</span> <span class="pre">receive</span> <span class="pre">a</span> <span class="pre">linearly</span> <span class="pre">increasing</span> <span class="pre">penalty</span> <span class="pre">(negative</span></span></dt>
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">reward).</span></span></dt>
+<dd></dd></dl>
+
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">multi-agent-market-rl</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Multi-Agent-Market-RL</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#documentation-of-the-code">Documentation of the code</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="installation.html" title="previous chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021, Benjamin Suter.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 4.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/MultiAgentMarketRL.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
