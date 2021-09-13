@@ -9,6 +9,7 @@ We highly recommend installing the following application into a Conda environmen
 1. Clone the main branch of the following repository.::
 
     git clone https://github.com/jan-engelmann/multi-agent-market-rl
+   
     cd multi-agent-market-rl
 
 2. Make a Conda environment named market-rl::
