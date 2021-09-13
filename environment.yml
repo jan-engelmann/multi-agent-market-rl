@@ -1,0 +1,9 @@
+name: market-rl
+channels:
+  - defaults
+dependencies:
+  - python=3.8
+  - tianshou
+  - pandas
+  - matplotlib
+  - ipykernel
