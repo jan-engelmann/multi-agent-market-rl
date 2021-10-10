@@ -356,6 +356,7 @@ class MultiAgentEnvironment:
         current_observations = self.observations[-1]
         current_actions = torch.cat([s_actions, b_actions], dim=-1).detach().to(torch.device('cpu'))
         current_rewards = torch.cat([rewards_sellers, rewards_buyers], dim=-1).detach().to(torch.device('cpu'))
+        current_deals = torch.cat([deals_sellers, deals_buyers], dim=-1).detach().to(torch.device('cpu'))
         agent_states = torch.cat([self.done_sellers, self.done_buyers], dim=-1).detach().to(torch.device('cpu'))
 
         # Update the mask keeping track of which agents are done in the current game.
@@ -375,6 +376,7 @@ class MultiAgentEnvironment:
             current_observations,
             current_actions,
             current_rewards,
+            current_deals,
             next_observation,
             agent_states,
             self.done,

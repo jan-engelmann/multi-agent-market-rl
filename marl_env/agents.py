@@ -1,4 +1,6 @@
 import os
+
+import numpy as np
 import torch
 import pandas as pd
 
@@ -11,7 +13,7 @@ class AgentSetting:
 
     """
 
-    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu')) -> None:
+    def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), verbose=True) -> None:
         assert role in ["buyer", "seller"], "role should be 'buyer' or 'seller'"
         assert reservation > 0, "reservation price needs to be larger then zero"
         self.role = role
@@ -19,9 +21,13 @@ class AgentSetting:
         self.in_features = in_features
         self.device = device
 
+        if verbose:
+            print(f"-- role: {role}")
+            print(f"-- reservation: {reservation}")
+
         # Print role and reservation price of the agent being initialised
-        print(f"-- role: {role}")
-        print(f"-- reservation: {reservation}")
+        # print(f"-- role: {role}")
+        # print(f"-- reservation: {reservation}")
 
         # For Buyer: Action space is the closed interval of [min_s_reservation, self.reservation]
         #     Where min_s_reservation denotes the smallest reservation price of all sellers. Therefore this action will
@@ -102,12 +108,16 @@ class DQNAgent(AgentSetting):
             save_weights_file: str, optional (default="default_test_file.pt")
                 File name of the saved weights. Must be a .pt or .pth file
         """
-        print("Initialising DQNAgent")
-        super(DQNAgent, self).__init__(role, reservation, in_features, action_boundary, device=device)
+        self.verbose = kwargs.pop("verbose", True)
 
+        if self.verbose:
+            print("Initialising DQNAgent")
+
+        super(DQNAgent, self).__init__(role, reservation, in_features, action_boundary, device=device, verbose=self.verbose)
+
+        lr = kwargs.pop("lr", 0.001)
         network_type = kwargs.pop("network_type", "SimpleExampleNetwork")
         self.agent_name = kwargs.pop("agent_name", "Undefined_DQNAgent")
-        lr = kwargs.pop("lr", 0.001)
         default_directory = f"../saved_agent_weights/default_path/{self.agent_name}/"
         self.save_weights_directory = kwargs.pop("save_weights_directory", default_directory)
         self.save_weights_file = kwargs.pop("save_weights_file", "default_test_file.pt")
@@ -126,11 +136,12 @@ class DQNAgent(AgentSetting):
         self.q_opt.zero_grad()
 
         # Print optional agent settings
-        print(f"-- Dealing with agent: {self.agent_name}")
-        print(f"-- lr: {lr}")
-        print(f"-- save_weights_directory: {self.save_weights_directory}")
-        print(f"-- save_weights_file: {self.save_weights_file}")
-        print("")
+        if self.verbose:
+            print(f"-- Dealing with agent: {self.agent_name}")
+            print(f"-- lr: {lr}")
+            print(f"-- save_weights_directory: {self.save_weights_directory}")
+            print(f"-- save_weights_file: {self.save_weights_file}")
+            print("")
 
     def reset_target_network(self):
         """
@@ -256,7 +267,8 @@ class DQNAgent(AgentSetting):
         Saves the model weights in a given directory using a specific file name
         """
         os.makedirs(self.save_weights_directory, exist_ok=True)
-        print(f"-- Saving model weights for {self.agent_name}")
+        if self.verbose:
+            print(f"-- Saving model weights for {self.agent_name}")
         torch.save(self.qNetwork.state_dict(), os.path.join(self.save_weights_directory, self.save_weights_file))
 
 
@@ -284,9 +296,13 @@ class ConstAgent(AgentSetting):
             const_price: int (default=(reservation + action_boundary)//2.0)
                 The constant asking / bidding price
         """
-        print("Initialising ConstAgent")
+        self.verbose = kwargs.pop("verbose", True)
+
+        if self.verbose:
+            print("Initialising ConstAgent")
+
         super(ConstAgent, self).__init__(
-            role, reservation, in_features, action_boundary, device=device
+            role, reservation, in_features, action_boundary, device=device, verbose=self.verbose
         )
 
         self.const_price = kwargs.pop(
@@ -295,7 +311,8 @@ class ConstAgent(AgentSetting):
         self.agent_name = kwargs.pop("agent_name", "Undefined_ConstAgent")
 
         # Print optional agent settings
-        print(f"-- const_price: {self.const_price}")
+        if self.verbose:
+            print(f"-- const_price: {self.const_price}")
 
         assert self.const_price in self.action_space, (
             f"The chosen constant price {self.const_price} is not included "
@@ -305,7 +322,9 @@ class ConstAgent(AgentSetting):
         )
         self.const_price = torch.tensor([self.const_price], device=self.device)
         self.q_opt = self.Optimizer()
-        print("")
+
+        if self.verbose:
+            print("")
 
     def get_action(self, observation, epsilon=0.05):
         """
@@ -341,7 +360,8 @@ class ConstAgent(AgentSetting):
         Dummy weight saver --> will pass
 
         """
-        print(f"-- {self.agent_name} has no model weights that can be saved... passing")
+        if self.verbose:
+            print(f"-- {self.agent_name} has no model weights that can be saved... passing")
         pass
 
     class Optimizer:
@@ -362,6 +382,7 @@ class ConstAgent(AgentSetting):
 class HumanReplayAgent(AgentSetting):
     def __init__(self, role, reservation, in_features, action_boundary, device=torch.device('cpu'), **kwargs) -> None:
         """
+        Replays the human games --> 10 Episodes with every episode consisting of
 
         Parameters
         ----------
@@ -388,72 +409,184 @@ class HumanReplayAgent(AgentSetting):
                 Player id. Must match with agent 'role', 'reservation', 'data_type' and 'treatment'.
                 See the .csv files in the git directory 'HumanReplayData/data_type'
         """
-        print("Initialising HumanReplayAgent")
+        self.verbose = kwargs.pop("verbose", True)
+
+        if self.verbose:
+            print("Initialising HumanReplayAgent")
+
         super(HumanReplayAgent, self).__init__(
-            role, reservation, in_features, action_boundary, device=device
+            role, reservation, in_features, action_boundary, device=device, verbose=self.verbose
         )
+
         data_type = kwargs.pop("data_type", "new_data")
         treatment = kwargs.pop("treatment", "FullLimS")
         player_id = kwargs.pop("id", 954)
+        game_id = kwargs.pop("game_id", np.random.randint(1, high=6))
+        round_id = kwargs.pop("round_id", np.random.randint(1, high=10))
+        self.random_play = kwargs.pop("random_play", False)
         self.agent_name = kwargs.pop("agent_name", "Undefined_HumanReplayAgent")
 
-        # Make better...
+        # Print optional agent settings
+        if self.verbose:
+            print(f"-- treatment: {treatment}")
+            print(f"-- id: {player_id}")
+            print(f"-- game_id: {game_id}")
+            print(f"-- round_id: {round_id}")
+            print(f"-- random_play: {self.random_play}")
+
+        self.action_list = None
+        self.action_time = None
+        self.bid_time = None
+
+        # Initialize the action
+        if self.role == "buyer":
+            self.action = 0
+        else:
+            self.action = 100000  # Some large number such that no buyer can purchase the item --> No action
+
+        # Initialize the action_list and the action_time
+        if self.random_play:
+            self.get_random_action_data(game_id, round_id)
+        else:
+            self.get_action_data(data_type, treatment, player_id, game_id, round_id)
+
+        self.q_opt = self.Optimizer()
+
+        self.step = 0
+        self.round = 1
+
+        if self.verbose:
+            print("")
+
+    def get_action_data(self, data_type, treatment, player_id, game_id, round_id):
         if data_type == "new_data":
             data_path = "../HumanReplayData/NewData/new_data.csv"
         else:
-            data_path = "../HumanReplayData/NewData/old_data.csv"
+            data_path = "../HumanReplayData/OldData/old_data.csv"
 
-        # Print optional agent settings
-        print(f"-- data_path: {data_path}")
-        print(f"-- treatment: {treatment}")
-        print(f"-- id: {player_id}")
+        if self.verbose:
+            print(f"-- data_path: {data_path}")
 
         data = pd.read_csv(data_path)
         data = data.dropna(axis=0, subset=["valuation"])
 
         # Assert that the correct reservation price is used in the market.
-        tmp = data.loc[(data["treatment"] == treatment) & (data["id"] == player_id)][
+        tmp = data.loc[(data["treatment"] == treatment) &
+                       (data["id"] == player_id) &
+                       (data["game"] == game_id) &
+                       (data["round"] == round_id)][
             "valuation"
         ].tolist()
-        assert tmp == len(tmp) * [reservation], (
+        assert tmp == len(tmp) * [self.reservation], (
             "Reservation price from data does not match with the reservation "
             "price from the agent dict."
         )
         # Assert that the agent has the correct role in the market.
-        tmp = data.loc[(data["treatment"] == treatment) & (data["id"] == player_id)][
+        tmp = data.loc[(data["treatment"] == treatment) &
+                       (data["id"] == player_id) &
+                       (data["game"] == game_id) &
+                       (data["round"] == round_id)][
             "side"
         ].tolist()
-        assert [x.lower() for x in tmp] == len(tmp) * [role], (
+        assert [x.lower() for x in tmp] == len(tmp) * [self.role], (
             "Role from data set does not match with the role from the agent dict"
         )
 
+        # Get all bids in order of episode 1 --> All bids. Episode 2 --> All bids...
         self.action_list = data.loc[
-            (data["treatment"] == treatment) & (data["id"] == player_id)
-        ]["bid"].tolist()
-        assert len(self.action_list) != 0, (
-            "Action list is empty --> Probably the chosen HumanReplayAgent does not "
-            "exist. Double check the chosen agent configurations: 'data_type':... "
-            "'treatment':..., 'id':..."
-        )
+            (data["treatment"] == treatment) &
+            (data["id"] == player_id) &
+            (data["game"] == game_id) &
+            (data["round"] == round_id)
+            ]["bid"].tolist()
+        self.action_time = data.loc[
+            (data["treatment"] == treatment) &
+            (data["id"] == player_id) &
+            (data["game"] == game_id) &
+            (data["round"] == round_id)
+            ]["time"].tolist()
+        # assert len(self.action_list) != 0, (
+        #     "Action list is empty --> Probably the chosen HumanReplayAgent does not "
+        #     "exist. Double check the chosen agent configurations: 'data_type':... "
+        #     "'treatment':..., 'id':..."
+        # )
 
-        self.q_opt = self.Optimizer()
-        self.action = None
-        self.step = 0
-        print("")
+        if len(self.action_time) == 0 or len(self.action_list) == 0:
+            if self.verbose:
+                print("Action list is empty --> This HumanReplayAgent will not perform any actions")
+            self.action_time = [999]
+            self.action_list = [self.action]
+
+        self.bid_time = self.action_time.pop(0)
+
+    def get_random_action_data(self, game_id, round_id):
+        # ToDo
+        # Need a combined csv file from old and new data.
+        path1 = "../HumanReplayData/NewData/new_data.csv"
+        path2 = "../HumanReplayData/OldData/old_data.csv"
+
+        data = pd.read_csv(path1)
+        data2 = pd.read_csv(path2)
+        data = pd.concat([data, data2])
+        data = data.drop(data[data["treatment"] == "BB"].index)
+        del data2
+
+        # Filter out all unneeded data
+        self.action_list = data.loc[(data['valuation'] == self.reservation) &
+                                    (data['side'] == self.role.capitalize()) &
+                                    (data["game"] == game_id) &
+                                    (data["round"] == round_id)]
+        # print(f"Agent {self.agent_name}'s action_list has shape {self.action_list.shape}")
 
     def get_action(self, observation, epsilon=0.05):
         """
-        Returns the next bid from the data set for every market step. If all data steps have been used, we will restart
-        from the beginning.
+        Returns the bid from the data set at the exact experiment time. Only works for a environment with max step size
+        of 135, representing the experiment time in seconds. If current environment step does not match the bid time
+        of the experiment, the agent will perform "no action". This means biding zero for a buyer and asking for 10000
+        as a seller.
 
         Returns
         -------
         torch.Tensor of shape (1,) containing the bid price of the agent
         """
-        idx = self.step
+        assert not self.random_play, (
+            "random_play must be set to False in order to initialize the necessary data for a non random action"
+        )
+        _time = self.step
 
-        self.action = self.action_list[idx]
-        self.step = (self.step + 1) % len(self.action_list)
+        if self.bid_time == _time:
+            self.action = self.action_list.pop(0)
+            try:
+                self.bid_time = self.action_time.pop(0)
+            except IndexError:
+                self.bid_time = 999
+
+        self.step = (self.step + 1) % 135
+
+        return torch.tensor([self.action], device=self.device)
+
+    def random_action(self, observation=None, epsilon=0.0):
+        assert self.random_play, (
+            "random_play must be set to True in order to initialize the necessary data for a random_action"
+        )
+        _time = self.step
+        _round = self.round
+        sub_data = self.action_list.loc[
+            (self.action_list['time'] == _time) & (self.action_list['round'] == _round)
+            ]
+
+        if torch.bernoulli(torch.Tensor([epsilon])) or sub_data.empty:
+            if self.role == "buyer":
+                self.action = 0
+            else:
+                self.action = 100000
+        else:
+            self.action = sub_data.sample(1, ignore_index=True)['bid'][0]
+            # print(f"Action of {self.agent_name} is: {self.action}")
+
+        self.step = (self.step + 1) % 135
+        if self.step == 0:
+            self.round = (self.round % 9) + 1
 
         return torch.tensor([self.action], device=self.device)
 
@@ -481,7 +614,8 @@ class HumanReplayAgent(AgentSetting):
         Dummy weight saver --> will pass
 
         """
-        print(f"-- {self.agent_name} has no model weights that can be saved... passing")
+        if self.verbose:
+            print(f"-- {self.agent_name} has no model weights that can be saved... passing")
         pass
 
     class Optimizer:

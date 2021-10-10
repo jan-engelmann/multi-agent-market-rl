@@ -149,7 +149,7 @@ class DeepQTrainer:
         buffer = ReplayBuffer(size=memory_size)
 
         for step in range(replay_start_size):
-            obs, act, rew, obs_next, a_states, done = self.env.step(random_action=True)
+            obs, act, rew, _, obs_next, a_states, done = self.env.step(random_action=True)
             history_batch = Batch(
                 obs=obs,
                 act=act,
