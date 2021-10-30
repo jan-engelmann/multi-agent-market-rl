@@ -29,6 +29,11 @@ class AgentSetting:
         # print(f"-- role: {role}")
         # print(f"-- reservation: {reservation}")
 
+        # Update:
+        # Using large action space... --> Don't want to include agent inaccessible market information into action space
+        # Buyers will have action space [0, reservation price]
+        # Sellers will have action space [reservation price, 300] (300 arbitrarily chosen price...)
+
         # For Buyer: Action space is the closed interval of [min_s_reservation, self.reservation]
         #     Where min_s_reservation denotes the smallest reservation price of all sellers. Therefore this action will
         #     result in 'no action' since a buyer must always bide higher then the reservation price of a seller.
@@ -46,14 +51,14 @@ class AgentSetting:
                 "price of all sellers. This results in an empty action space."
                 "Are you sure you wanted to make a buyer?"
             )
-            self.action_space = torch.arange(action_boundary, reservation + 1, device=self.device)
+            self.action_space = torch.arange(0, reservation + 1, device=self.device)
         else:
             assert reservation < (action_boundary + 1), (
                 "Reservation price of seller is >= the largest reservation "
                 "price of all buyers. This results in an empty action space."
                 "Are you sure you wanted to make a seller?"
             )
-            self.action_space = torch.arange(reservation, action_boundary + 1, device=self.device)
+            self.action_space = torch.arange(reservation, 300 + 1, device=self.device)
 
     def get_action(self, observation, epsilon=0.05) -> NotImplementedError:
         raise NotImplementedError
